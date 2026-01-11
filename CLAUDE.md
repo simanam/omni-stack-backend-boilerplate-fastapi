@@ -665,26 +665,42 @@
 
 ---
 
-## Phase 12.6 Complete - Contact Form
+## Phase 12.6 Complete - Contact Form (Enhanced)
 
 ### Files Created
 - `app/api/v1/public/contact.py` - Contact form endpoints
-- `tests/unit/test_contact.py` - Unit tests (23 tests)
+- `app/models/contact_submission.py` - ContactSubmission database model
+- `migrations/versions/20260111_120000_add_contact_submission_model.py` - Migration
+- `tests/unit/test_contact.py` - Unit tests (32 tests)
 
 ### New API Endpoints
 - `POST /api/v1/public/contact` - Submit contact form
-- `GET /api/v1/public/contact/status` - Check rate limit status
+- `GET /api/v1/public/contact/status` - Check rate limit and config
+
+### Fields
+**Required:** name, email, message
+**Optional:** subject, phone, company (configurable as required)
+**Custom:** `extra_fields` dict for any additional data (budget, project_type, etc.)
 
 ### Features
-- Rate limiting (5 submissions per hour per IP)
-- Honeypot spam protection
-- Timing-based bot detection
-- Email notification to admin
-- Redis storage for messages (7 days TTL)
-- Reference ID for tracking (CNT-XXXXXXXX format)
+- Modular fields with configurable requirements
+- Custom fields via `extra_fields` dict
+- Database persistence (ContactSubmission model)
+- Confirmation email to sender
+- Webhook for CRM/integrations (Zapier, Make, n8n compatible)
+- Rate limiting (configurable)
+- Honeypot + timing-based spam protection
+- Source tracking for analytics
 
 ### Configuration
-- `ADMIN_EMAIL` - Admin email for contact form notifications
+```bash
+ADMIN_EMAIL=admin@example.com           # Admin notification email
+CONTACT_REQUIRE_SUBJECT=false           # Make subject required
+CONTACT_REQUIRE_PHONE=false             # Make phone required
+CONTACT_SEND_CONFIRMATION=true          # Send confirmation to sender
+CONTACT_WEBHOOK_URL=https://...         # Webhook for CRM integrations
+CONTACT_RATE_LIMIT="5/hour"             # Rate limit per IP
+```
 
 ---
 

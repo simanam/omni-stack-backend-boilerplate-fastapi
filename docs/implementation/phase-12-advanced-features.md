@@ -170,23 +170,45 @@
 
 ### Files created:
 - [x] `app/api/v1/public/contact.py` — Contact form endpoints
-- [x] `tests/unit/test_contact.py` — Unit tests (23 tests)
+- [x] `app/models/contact_submission.py` — ContactSubmission model
+- [x] `migrations/versions/20260111_120000_add_contact_submission_model.py` — Migration
+- [x] `tests/unit/test_contact.py` — Unit tests (32 tests)
 
 ### Checklist:
 - [x] Contact form submission:
-  - [x] Validate input (name, email, subject, message)
-  - [x] Rate limit (5 per hour per IP)
+  - [x] Required fields: name, email, message
+  - [x] Optional fields: subject, phone, company (configurable as required)
+  - [x] Custom fields: extra_fields dict for any additional data
+  - [x] Source tracking for analytics
+  - [x] Configurable rate limit (CONTACT_RATE_LIMIT)
   - [x] Send email notification to admin
-  - [x] Store in Redis (optional, 7 days TTL)
+  - [x] Database persistence (ContactSubmission model)
+  - [x] Redis cache (7 days TTL)
+- [x] Confirmation email:
+  - [x] Send to sender (configurable via CONTACT_SEND_CONFIRMATION)
+  - [x] Include reference number
+- [x] Webhook integration:
+  - [x] Generic webhook (CONTACT_WEBHOOK_URL)
+  - [x] Signature header for verification
+  - [x] Compatible with Zapier/Make/n8n
 - [x] Spam protection:
   - [x] Honeypot field for spam
   - [x] Timing-based bot detection
-- [x] Status endpoint for rate limit info
+- [x] Status endpoint with config info
+
+### Configuration:
+- `CONTACT_REQUIRE_SUBJECT` - Make subject required (default: false)
+- `CONTACT_REQUIRE_PHONE` - Make phone required (default: false)
+- `CONTACT_SEND_CONFIRMATION` - Send confirmation email (default: true)
+- `CONTACT_WEBHOOK_URL` - Webhook URL for CRM integrations
+- `CONTACT_RATE_LIMIT` - Rate limit string (default: "5/hour")
 
 ### Validation:
-- [x] Contact form works
+- [x] Contact form works with modular fields
 - [x] Rate limiting prevents spam
 - [x] Honeypot catches bots
+- [x] Confirmation emails sent
+- [x] Webhooks fire on submission
 
 ---
 
@@ -257,7 +279,8 @@
 | `tests/unit/test_websocket.py` | WebSocket tests (23) | ✅ |
 | `tests/unit/test_admin_dashboard.py` | Admin dashboard tests (31) | ✅ |
 | `app/api/v1/public/contact.py` | Contact form | ✅ |
-| `tests/unit/test_contact.py` | Contact form tests (23) | ✅ |
+| `app/models/contact_submission.py` | Contact submission model | ✅ |
+| `tests/unit/test_contact.py` | Contact form tests (32) | ✅ |
 | `app/api/v2/router.py` | Version 2 API | 🔴 |
 | `app/core/versioning.py` | Version utilities | 🔴 |
 | `app/core/tracing.py` | OpenTelemetry setup | 🔴 |
