@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Welcome, {{ name }}!</h2>
+
+<p>Thanks for joining {{ app_name }}. We're excited to have you on board.</p>
+
+<p>Your account has been created and you're ready to get started.</p>
+
+{% if verify_url %}
+<p style="text-align: center; margin: 30px 0;">
+    <a href="{{ verify_url }}" class="button">Verify Your Email</a>
+</p>
+{% endif %}
+
+<p>If you have any questions, just reply to this email - we're always happy to help.</p>
+
+<p>
+    Best regards,<br>
+    The {{ app_name }} Team
+</p>
+{% endblock %}
