@@ -166,25 +166,27 @@
 
 ---
 
-## 12.6 Contact Form / Public Endpoints
+## 12.6 Contact Form / Public Endpoints ✅
 
-### Files to create:
-- [ ] `app/api/v1/public/contact.py` — Contact form
+### Files created:
+- [x] `app/api/v1/public/contact.py` — Contact form endpoints
+- [x] `tests/unit/test_contact.py` — Unit tests (23 tests)
 
 ### Checklist:
-- [ ] Contact form submission:
-  - [ ] Validate input
-  - [ ] Rate limit (prevent spam)
-  - [ ] Send email notification
-  - [ ] Store in database (optional)
-- [ ] Captcha integration (optional):
-  - [ ] reCAPTCHA v3
-  - [ ] hCaptcha
-- [ ] Honeypot field for spam
+- [x] Contact form submission:
+  - [x] Validate input (name, email, subject, message)
+  - [x] Rate limit (5 per hour per IP)
+  - [x] Send email notification to admin
+  - [x] Store in Redis (optional, 7 days TTL)
+- [x] Spam protection:
+  - [x] Honeypot field for spam
+  - [x] Timing-based bot detection
+- [x] Status endpoint for rate limit info
 
 ### Validation:
-- [ ] Contact form works
-- [ ] Rate limiting prevents spam
+- [x] Contact form works
+- [x] Rate limiting prevents spam
+- [x] Honeypot catches bots
 
 ---
 
@@ -254,8 +256,9 @@
 | `app/models/audit_log.py` | Audit log model | ✅ |
 | `tests/unit/test_websocket.py` | WebSocket tests (23) | ✅ |
 | `tests/unit/test_admin_dashboard.py` | Admin dashboard tests (31) | ✅ |
+| `app/api/v1/public/contact.py` | Contact form | ✅ |
+| `tests/unit/test_contact.py` | Contact form tests (23) | ✅ |
 | `app/api/v2/router.py` | Version 2 API | 🔴 |
 | `app/core/versioning.py` | Version utilities | 🔴 |
 | `app/core/tracing.py` | OpenTelemetry setup | 🔴 |
-| `app/api/v1/public/contact.py` | Contact form | 🔴 |
 | `app/services/payments/usage.py` | Usage tracking | 🔴 |

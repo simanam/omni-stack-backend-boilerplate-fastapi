@@ -11,13 +11,14 @@ from app.api.v1.admin import impersonate as admin_impersonate
 from app.api.v1.admin import jobs as admin_jobs
 from app.api.v1.admin import users as admin_users
 from app.api.v1.app import ai, billing, files, projects, users, ws
-from app.api.v1.public import health, metrics, webhooks
+from app.api.v1.public import contact, health, metrics, webhooks
 
 # Public routes (no auth required)
 public_router = APIRouter(prefix="/public", tags=["Public"])
 public_router.include_router(health.router)
 public_router.include_router(webhooks.router, prefix="/webhooks")
 public_router.include_router(metrics.router)
+public_router.include_router(contact.router)
 
 # App routes (auth required)
 app_router = APIRouter(prefix="/app", tags=["App"])

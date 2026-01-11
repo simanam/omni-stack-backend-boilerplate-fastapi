@@ -115,6 +115,7 @@ class Settings(BaseSettings):
     EMAIL_PROVIDER: Literal["resend", "sendgrid", "console"] = "console"
     EMAIL_FROM_ADDRESS: str = "hello@example.com"
     EMAIL_FROM_NAME: str = "My App"
+    ADMIN_EMAIL: str | None = None  # Admin notification email
     RESEND_API_KEY: str | None = None
     SENDGRID_API_KEY: str | None = None
 
