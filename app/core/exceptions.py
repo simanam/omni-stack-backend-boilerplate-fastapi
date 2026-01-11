@@ -71,6 +71,10 @@ class AuthorizationError(AppException):
         )
 
 
+# Alias for AuthorizationError
+ForbiddenError = AuthorizationError
+
+
 class RateLimitError(AppException):
     """Rate limit exceeded."""
 

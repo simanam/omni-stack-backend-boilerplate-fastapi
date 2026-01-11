@@ -5,6 +5,9 @@ Combines all v1 route modules into a single router.
 
 from fastapi import APIRouter
 
+from app.api.v1.admin import dashboard as admin_dashboard
+from app.api.v1.admin import feature_flags as admin_feature_flags
+from app.api.v1.admin import impersonate as admin_impersonate
 from app.api.v1.admin import jobs as admin_jobs
 from app.api.v1.admin import users as admin_users
 from app.api.v1.app import ai, billing, files, projects, users, ws
@@ -29,6 +32,9 @@ app_router.include_router(ws.router)  # WebSocket at /api/v1/app/ws
 admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 admin_router.include_router(admin_users.router, prefix="/users")
 admin_router.include_router(admin_jobs.router, prefix="/jobs")
+admin_router.include_router(admin_dashboard.router, prefix="/dashboard")
+admin_router.include_router(admin_feature_flags.router, prefix="/feature-flags")
+admin_router.include_router(admin_impersonate.router, prefix="/impersonate")
 
 # Aggregate all v1 routes
 api_router = APIRouter(prefix="/api/v1")
