@@ -1,0 +1,149 @@
+# MkDocs Configuration for OmniStack Backend Documentation
+# Deploy with: mkdocs gh-deploy
+
+site_name: OmniStack Backend
+site_description: Production-ready FastAPI backend boilerplate for SaaS applications
+site_author: OmniStack Team
+site_url: https://simanam.github.io/omni-stack-backend-boilerplate-fastapi
+
+# Repository
+repo_name: omni-stack-backend-boilerplate-fastapi
+repo_url: https://github.com/simanam/omni-stack-backend-boilerplate-fastapi
+edit_uri: edit/main/documentation/
+
+# Copyright
+copyright: Copyright &copy; 2026 OmniStack
+
+# Theme Configuration
+theme:
+  name: material
+  language: en
+
+  # Color palette
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Features
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
+  # Icons
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/api
+
+  # Logo and favicon (using external URL)
+  logo: https://res.cloudinary.com/dcbttqrom/image/upload/v1767038205/omnylink/qr_logos/bb2ed35b-6724-4339-8306-f6e2c3b55ac4.png
+  favicon: https://res.cloudinary.com/dcbttqrom/image/upload/v1767038205/omnylink/qr_logos/bb2ed35b-6724-4339-8306-f6e2c3b55ac4.png
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+  - minify:
+      minify_html: true
+
+# Markdown Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Documentation directory
+docs_dir: documentation
+
+# Navigation
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: GETTING-STARTED.md
+  - API Reference:
+    - Endpoints: API-REFERENCE.md
+  - Architecture:
+    - System Design: ARCHITECTURE.md
+  - Guides:
+    - Modular Setup: MODULAR-GUIDE.md
+    - Frontend Integration: FRONTEND-INTEGRATION.md
+  - Contributing:
+    - How to Contribute: CONTRIBUTING.md
+
+# Extra Configuration
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/simanam/omni-stack-backend-boilerplate-fastapi
+
+  # Google Analytics (uncomment and add your tracking ID)
+  # analytics:
+  #   provider: google
+  #   property: G-XXXXXXXXXX
+
+  # Version selector
+  version:
+    provider: mike
+
+# Extra CSS (uncomment when you add custom styles)
+# extra_css:
+#   - stylesheets/extra.css
+
+# Extra JavaScript (uncomment when you add custom scripts)
+# extra_javascript:
+#   - javascripts/extra.js

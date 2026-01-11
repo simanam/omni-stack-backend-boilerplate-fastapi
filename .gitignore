@@ -102,3 +102,6 @@ test.db
 
 # Local development
 .local/
+
+# MkDocs build output
+site/
