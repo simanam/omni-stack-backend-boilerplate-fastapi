@@ -15,6 +15,7 @@ from app.core.exceptions import AppException, app_exception_handler
 from app.core.logging import get_logger, setup_logging
 from app.core.middleware import register_middleware
 from app.core.sentry import init_sentry
+from app.services.websocket import connection_manager
 
 # Configure structured logging
 setup_logging()
@@ -36,10 +37,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize Redis (optional)
     await init_redis()
 
+    # Start WebSocket connection manager
+    await connection_manager.start()
+
     yield
 
     # Shutdown
     logger.info(f"Shutting down {settings.PROJECT_NAME}")
+
+    # Stop WebSocket connection manager
+    await connection_manager.stop()
+
     await close_redis()
 
 

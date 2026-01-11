@@ -7,7 +7,7 @@ from fastapi import APIRouter
 
 from app.api.v1.admin import jobs as admin_jobs
 from app.api.v1.admin import users as admin_users
-from app.api.v1.app import ai, billing, files, projects, users
+from app.api.v1.app import ai, billing, files, projects, users, ws
 from app.api.v1.public import health, metrics, webhooks
 
 # Public routes (no auth required)
@@ -23,6 +23,7 @@ app_router.include_router(projects.router, prefix="/projects")
 app_router.include_router(files.router, prefix="/files")
 app_router.include_router(ai.router, prefix="/ai")
 app_router.include_router(billing.router, prefix="/billing")
+app_router.include_router(ws.router)  # WebSocket at /api/v1/app/ws
 
 # Admin routes (auth + admin role required)
 admin_router = APIRouter(prefix="/admin", tags=["Admin"])
