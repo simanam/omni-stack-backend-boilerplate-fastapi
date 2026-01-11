@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/API-REFERENCE/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/ARCHITECTURE/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/CONTRIBUTING/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/FRONTEND-INTEGRATION/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/GETTING-STARTED/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+    <url>
+         <loc>https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/MODULAR-GUIDE/</loc>
+         <lastmod>2026-01-11</lastmod>
+    </url>
+</urlset>
