@@ -16,9 +16,10 @@
 
 | Metric | Value |
 |--------|-------|
-| **Current Phase** | Phase 12: Advanced (v1.1) - Optional |
+| **Current Phase** | Phase 12: Advanced (v1.1) - In Progress |
 | **v1.0 Status** | ✅ Complete (Phases 1-11) |
-| **Overall Progress** | 115/123 tasks (93%) |
+| **v1.1 Progress** | 2/8 features complete (WebSocket, Admin Dashboard) |
+| **Overall Progress** | 117/123 tasks (95%) |
 | **v1.0 Progress** | 115/115 tasks (100%) |
 | **Documentation** | [Live on GitHub Pages](https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/) |
 | **License** | MIT |
@@ -53,7 +54,7 @@
 
 4. **Run tests:**
    ```bash
-   make test  # Should pass 189/190 tests (1 pre-existing async issue)
+   make test  # Should pass ~230 tests (unit + integration)
    make lint  # Should pass all checks
    ```
 
@@ -76,7 +77,7 @@
 | 9 | Testing | 12 | ✅ Complete |
 | 10 | Deployment | 13 | ✅ Complete |
 | 11 | Documentation | 10 | ✅ Complete |
-| 12 | Advanced (v1.1) | 8 | 🟡 Optional |
+| 12 | Advanced (v1.1) | 8 | 🟡 2/8 Complete |
 
 ---
 
@@ -595,18 +596,88 @@
 
 ---
 
-## What To Do Next: Phase 12 (Advanced - v1.1)
+## Phase 12.2 Complete - WebSocket Support
 
-### Optional Features
+### Files Created
+- `app/services/websocket/__init__.py` - Package exports
+- `app/services/websocket/manager.py` - Connection manager with Redis pub/sub
+- `app/services/websocket/events.py` - Event types and message schemas
+- `app/api/v1/app/ws.py` - WebSocket endpoints
+- `tests/unit/test_websocket.py` - 23 unit tests
 
-1. **Multi-tenancy** - Organization/team support
-2. **API Keys** - Service account authentication
-3. **Audit Logging** - Track all data changes
-4. **Real-time** - WebSocket support
-5. **GraphQL** - Alternative API layer
-6. **i18n** - Internationalization
-7. **Feature Flags** - LaunchDarkly integration
-8. **A/B Testing** - Experiment framework
+### Features
+- JWT authentication via query parameter
+- Connection tracking by user ID
+- Channel/room subscriptions
+- Broadcast to users, channels, or all
+- Redis pub/sub for multi-instance support
+- Presence tracking
+- Ping/pong heartbeat
+
+### New Endpoints
+- `ws://host/api/v1/app/ws?token=<jwt>` - WebSocket connection
+- `GET /api/v1/app/ws/status` - Connection statistics
+
+---
+
+## Phase 12.3 Complete - Admin Dashboard
+
+### Files Created
+- `app/models/audit_log.py` - Audit log model for tracking actions
+- `app/models/feature_flag.py` - Feature flag model (boolean, percentage, user_list, plan_based)
+- `app/api/v1/admin/dashboard.py` - Dashboard statistics endpoint
+- `app/api/v1/admin/feature_flags.py` - Feature flags CRUD
+- `app/api/v1/admin/impersonate.py` - User impersonation
+- `migrations/versions/20260111_100000_add_audit_log_and_feature_flag_models.py` - Migration
+- `tests/unit/test_admin_dashboard.py` - 31 unit tests
+
+### New API Endpoints
+
+**Dashboard:**
+- `GET /api/v1/admin/dashboard/stats` - System statistics (users, subscriptions, webhooks, jobs)
+- `GET /api/v1/admin/dashboard/audit-logs` - Audit log listing with filters
+- `GET /api/v1/admin/dashboard/audit-logs/{id}` - Get specific audit log
+
+**Feature Flags:**
+- `GET /api/v1/admin/feature-flags` - List all flags
+- `POST /api/v1/admin/feature-flags` - Create flag
+- `GET /api/v1/admin/feature-flags/{id}` - Get flag by ID
+- `GET /api/v1/admin/feature-flags/key/{key}` - Get flag by key
+- `PATCH /api/v1/admin/feature-flags/{id}` - Update flag
+- `DELETE /api/v1/admin/feature-flags/{id}` - Delete flag
+- `POST /api/v1/admin/feature-flags/{id}/enable` - Enable flag
+- `POST /api/v1/admin/feature-flags/{id}/disable` - Disable flag
+- `POST /api/v1/admin/feature-flags/{id}/add-user` - Add user to flag
+- `POST /api/v1/admin/feature-flags/{id}/remove-user` - Remove user from flag
+- `GET /api/v1/admin/feature-flags/check/{key}` - Check flag for user
+
+**Impersonation:**
+- `POST /api/v1/admin/impersonate/start` - Start impersonation (creates JWT)
+- `POST /api/v1/admin/impersonate/stop` - Stop impersonation (audit log)
+- `GET /api/v1/admin/impersonate/active` - List recent impersonations
+
+### Feature Flag Types
+- **boolean** - Simple on/off toggle
+- **percentage** - Enable for X% of users (consistent hashing)
+- **user_list** - Enable for specific user IDs
+- **plan_based** - Enable for specific subscription plans (free, pro, enterprise)
+
+---
+
+## What To Do Next: Phase 12 (Remaining Features)
+
+### Completed
+- ✅ **12.2 WebSocket Support** - Real-time communication
+- ✅ **12.3 Admin Dashboard** - Stats, feature flags, impersonation, audit logs
+
+### Remaining Optional Features
+
+1. **12.1 API Versioning** - v1/v2 routing, deprecation headers
+2. **12.4 OpenTelemetry** - Distributed tracing
+3. **12.5 Enhanced Metrics** - Grafana dashboards
+4. **12.6 Contact Form** - Public endpoint with spam protection
+5. **12.7 Usage-Based Billing** - Track and report usage to Stripe
+6. **12.8 SQLite Fallback** - Offline development support
 
 ### Note
 
@@ -819,10 +890,11 @@ backend-boilerplate-fastapi/
 │   │   └── logging.py          # Structured logging
 │   ├── models/                 # SQLModel models
 │   ├── schemas/                # Pydantic schemas
-│   ├── services/               # External services (ai, email, storage)
+│   ├── services/               # External services (ai, email, storage, websocket)
 │   │   ├── email/              # Email providers (Resend, SendGrid, Console)
 │   │   ├── storage/            # Storage providers (S3, R2, Cloudinary, Local)
-│   │   └── ai/                 # AI providers (OpenAI, Anthropic, Gemini)
+│   │   ├── ai/                 # AI providers (OpenAI, Anthropic, Gemini)
+│   │   └── websocket/          # WebSocket connection manager (Phase 12)
 │   ├── business/               # Business logic (CRUD, services)
 │   ├── jobs/                   # ARQ background tasks
 │   └── utils/
@@ -950,5 +1022,5 @@ See `.env.example` for all variables.
 
 *Last Updated: 2026-01-11*
 *v1.0 Complete - All 11 Core Phases Finished*
+*v1.1 In Progress - Phase 12.2 (WebSocket) and 12.3 (Admin Dashboard) Complete*
 *Documentation: https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/*
-*Phase 12 (Advanced Features) - Optional*
