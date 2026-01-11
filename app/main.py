@@ -2,7 +2,6 @@
 FastAPI application factory and entry point.
 """
 
-import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -13,14 +12,16 @@ from app.api.v1.router import api_router
 from app.core.cache import close_redis, init_redis
 from app.core.config import settings
 from app.core.exceptions import AppException, app_exception_handler
+from app.core.logging import get_logger, setup_logging
 from app.core.middleware import register_middleware
+from app.core.sentry import init_sentry
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+# Configure structured logging
+setup_logging()
+logger = get_logger(__name__)
+
+# Initialize Sentry (if configured)
+init_sentry()
 
 
 @asynccontextmanager

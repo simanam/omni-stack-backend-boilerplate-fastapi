@@ -1,0 +1,82 @@
+# Render Blueprint - https://render.com/docs/blueprint-spec
+# Deploy: Link repo to Render and it will auto-detect this file
+
+services:
+  # Web API Service
+  - type: web
+    name: omnistack-api
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/v1/public/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: omnistack-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: omnistack-redis
+          property: connectionString
+      - key: SENTRY_DSN
+        sync: false
+      - key: AUTH_PROVIDER
+        sync: false
+      - key: SUPABASE_PROJECT_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+    autoDeploy: true
+
+  # Background Worker Service
+  - type: worker
+    name: omnistack-worker
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    plan: starter
+    region: oregon
+    dockerCommand: arq app.jobs.worker.WorkerSettings
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: omnistack-api
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: omnistack-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: omnistack-redis
+          property: connectionString
+    autoDeploy: true
+
+databases:
+  # PostgreSQL Database
+  - name: omnistack-db
+    plan: starter
+    region: oregon
+    postgresMajorVersion: "16"
+    ipAllowList: []  # Allow all IPs (use private networking in production)
+
+  # Redis Instance
+  - name: omnistack-redis
+    plan: starter
+    region: oregon
+    ipAllowList: []
