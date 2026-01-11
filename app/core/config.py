@@ -171,6 +171,13 @@ class Settings(BaseSettings):
     RATE_LIMIT_AI: str = "10/minute"
     RATE_LIMIT_AUTH: str = "5/minute"
 
+    # --- Contact Form ---
+    CONTACT_REQUIRE_SUBJECT: bool = False  # Make subject optional by default
+    CONTACT_REQUIRE_PHONE: bool = False
+    CONTACT_SEND_CONFIRMATION: bool = True  # Send confirmation to sender
+    CONTACT_WEBHOOK_URL: str | None = None  # Webhook for CRM/integrations
+    CONTACT_RATE_LIMIT: str = "5/hour"  # Rate limit per IP
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
