@@ -791,6 +791,81 @@ All logs include trace context when OpenTelemetry is enabled:
 }
 ```
 
+### Prometheus Metrics
+
+Comprehensive metrics are collected via `app/core/metrics.py`:
+
+```
+Metrics Categories:
+┌─────────────────────────────────────────────────────────────┐
+│                      HTTP Requests                          │
+│  - http_requests_total{method, endpoint, status_code}       │
+│  - http_request_duration_seconds{method, endpoint}          │
+│  - http_requests_in_progress{method, endpoint}              │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Database                               │
+│  - db_queries_total{operation, table}                       │
+│  - db_query_duration_seconds{operation, table}              │
+│  - db_pool_connections{state}                               │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      System                                 │
+│  - process_memory_bytes{type}                               │
+│  - process_cpu_seconds_total{mode}                          │
+│  - app_uptime_seconds                                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**MetricsMiddleware:**
+
+Automatic request tracking with path normalization:
+
+```python
+from app.core.metrics import MetricsMiddleware
+app.add_middleware(MetricsMiddleware)
+
+# Path normalization examples:
+# /api/v1/users/550e8400-e29b-... → /api/v1/users/{id}
+# /api/v1/projects/42 → /api/v1/projects/{id}
+```
+
+**Recording custom metrics:**
+
+```python
+from app.core.metrics import (
+    record_auth_event,
+    record_rate_limit_hit,
+    record_websocket_message,
+    record_webhook_event,
+)
+
+# Authentication events
+record_auth_event("login", provider="jwt")
+record_auth_failure("expired_token")
+
+# Rate limiting
+record_rate_limit_hit("/api/v1/ai/chat", "user")
+
+# WebSocket messages
+record_websocket_message("sent", "message")
+
+# Webhook processing
+record_webhook_event("stripe", "invoice.paid", "processed", duration=0.05)
+```
+
+### Grafana Dashboards
+
+Pre-built dashboards are available in `grafana/dashboards/`:
+
+| Dashboard | Description |
+|-----------|-------------|
+| `api-overview.json` | Request rate, latency, errors, top endpoints |
+| `database-redis.json` | Connection pools, query performance, cache stats |
+| `business-metrics.json` | Users, subscriptions, background jobs, AI usage |
+
+See `grafana/README.md` for installation instructions.
+
 ---
 
 ## Adding New Features

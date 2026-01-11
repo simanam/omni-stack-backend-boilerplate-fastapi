@@ -11,10 +11,10 @@
 | Metric | Value |
 |--------|-------|
 | **Current Phase** | Phase 12: Advanced Features (v1.1) |
-| **Overall Progress** | 97% (119/123 tasks) |
+| **Overall Progress** | 98% (121/123 tasks) |
 | **v1.0 Progress** | 100% (115/115 tasks) |
-| **v1.1 Progress** | 5/8 features complete |
-| **Unit Tests** | 260+ passing |
+| **v1.1 Progress** | 6/8 features complete |
+| **Unit Tests** | 370+ passing |
 | **Open Issues** | 0 |
 | **Last Updated** | 2026-01-11 |
 
@@ -185,6 +185,12 @@
 | ✅ app/api/v1/public/contact.py | 2026-01-11 | Contact form endpoints (Phase 12.6) |
 | ✅ app/models/contact_submission.py | 2026-01-11 | Contact submission model |
 | ✅ tests/unit/test_contact.py | 2026-01-11 | 32 contact form tests |
+| ✅ app/core/metrics.py (enhanced) | 2026-01-11 | Enhanced metrics with system/auth/WS/webhook (Phase 12.5) |
+| ✅ grafana/dashboards/api-overview.json | 2026-01-11 | Grafana API overview dashboard |
+| ✅ grafana/dashboards/database-redis.json | 2026-01-11 | Grafana database/cache dashboard |
+| ✅ grafana/dashboards/business-metrics.json | 2026-01-11 | Grafana business metrics dashboard |
+| ✅ grafana/README.md | 2026-01-11 | Dashboard installation guide |
+| ✅ tests/unit/test_metrics.py | 2026-01-11 | 54 metrics tests |
 
 ---
 
@@ -200,9 +206,8 @@
 
 | Priority | Task | File(s) | Est. Effort |
 |----------|------|---------|-------------|
-| 1 | Enhanced Metrics | `app/core/metrics.py` | Medium |
-| 2 | Usage-Based Billing | `app/services/payments/usage.py` | Medium |
-| 3 | SQLite Fallback | `app/core/db.py` | Small |
+| 1 | Usage-Based Billing | `app/services/payments/usage.py` | Medium |
+| 2 | SQLite Fallback | `app/core/db.py` | Small |
 
 ### Phase Readiness
 
@@ -219,7 +224,7 @@
 | Phase 9 | ✅ Complete | ✅ Done |
 | Phase 10 | ✅ Complete | ✅ Done |
 | Phase 11 | ✅ Complete | ✅ Done |
-| Phase 12 | 🟡 5/8 Complete | 🟡 In Progress |
+| Phase 12 | 🟡 6/8 Complete | 🟡 In Progress |
 
 ---
 
@@ -453,7 +458,7 @@
 ### Phase 12: Advanced Features 🟡
 
 **Status:** In Progress (v1.1)
-**Progress:** 5/8 tasks (62.5%)
+**Progress:** 6/8 tasks (75%)
 
 | Task | Status | Completed | Notes |
 |------|--------|-----------|-------|
@@ -462,7 +467,7 @@
 | Admin Dashboard | ✅ | 2026-01-11 | Stats, audit logs, impersonation (31 tests) |
 | Feature Flags | ✅ | 2026-01-11 | boolean, percentage, user_list, plan_based |
 | OpenTelemetry | ✅ | 2026-01-11 | Distributed tracing, auto-instrumentation (38 tests) |
-| Enhanced Metrics | 🔴 | - | Grafana dashboards |
+| Enhanced Metrics | ✅ | 2026-01-11 | System/auth/WS/webhook metrics, Grafana dashboards (54 tests) |
 | Contact Form | ✅ | 2026-01-11 | Spam protection, webhooks (32 tests) |
 | Usage-Based Billing | 🔴 | - | Track API/AI/storage usage |
 | SQLite Fallback | 🔴 | - | Offline development |
@@ -772,12 +777,46 @@
   - 32 unit tests for contact form
 
 **Test Summary:**
-- Phase 12 total: 162 tests (38+23+31+38+32)
+- Phase 12 total: 216 tests (38+23+31+38+54+32)
 - All tests passing
 
 **Issues Found:** None
 
-**Next Focus:** Phase 12.5 Enhanced Metrics, 12.7 Usage-Based Billing, 12.8 SQLite Fallback (optional)
+**Next Focus:** Phase 12.7 Usage-Based Billing, 12.8 SQLite Fallback (optional)
+
+---
+
+### 2026-01-11 - Phase 12.5 Enhanced Metrics Complete
+
+**Summary:** Comprehensive Prometheus metrics with Grafana dashboards
+
+**Completed:**
+- Phase 12.5 Enhanced Metrics complete:
+  - System metrics: memory, CPU, threads, file descriptors, uptime
+  - Authentication metrics: login/logout events, auth failures, active sessions
+  - Rate limiting metrics: blocked requests tracking
+  - WebSocket metrics: connections, messages sent/received
+  - Webhook metrics: events processed with latency tracking
+  - MetricsMiddleware for automatic HTTP request tracking
+  - Path normalization (UUIDs/IDs → `{id}`)
+  - 54 unit tests for all metrics functionality
+- Grafana dashboards (3 pre-built):
+  - API Overview: request rate, latency percentiles, error rates
+  - Database & Redis: connection pools, query performance, cache stats
+  - Business Metrics: users, subscriptions, background jobs, AI usage
+- Dashboard installation guide and provisioning documentation
+
+**Files Created:**
+- `app/core/metrics.py` (enhanced) - System/auth/WS/webhook metrics, MetricsMiddleware
+- `grafana/dashboards/api-overview.json` - API request metrics dashboard
+- `grafana/dashboards/database-redis.json` - Database and cache metrics dashboard
+- `grafana/dashboards/business-metrics.json` - Business KPIs dashboard
+- `grafana/README.md` - Dashboard installation guide
+- `tests/unit/test_metrics.py` - 54 metrics tests
+
+**Issues Found:** None
+
+**Next Focus:** Phase 12.7 Usage-Based Billing, 12.8 SQLite Fallback (optional)
 
 ---
 
@@ -838,7 +877,7 @@
 ### v1.0 Release Checklist
 
 - [x] Phase 1-11 complete
-- [x] All tests passing (260+ tests)
+- [x] All tests passing (370+ tests)
 - [x] Security audit passed (GitHub security workflows)
 - [x] Performance benchmarks met (load tests)
 - [x] Documentation complete (MkDocs GitHub Pages)
@@ -846,13 +885,14 @@
 
 ### v1.1 Release Checklist
 
-- [ ] Phase 12 complete (5/8 done)
+- [ ] Phase 12 complete (6/8 done)
 - [x] WebSocket functionality tested (23 tests)
 - [x] API versioning verified (38 tests)
 - [x] Feature flags working (admin CRUD)
 - [x] OpenTelemetry integration verified (38 tests)
+- [x] Enhanced Prometheus metrics (54 tests)
+- [x] Grafana dashboards (3 dashboards)
 - [x] Contact form with spam protection (32 tests)
-- [ ] Enhanced Prometheus metrics
 - [ ] Usage-based billing
 - [ ] SQLite fallback
 

@@ -88,6 +88,7 @@ These are the foundation - always keep them:
 | **Google IAP** | `app/services/payments/google_iap_service.py`, part of `app/business/iap_service.py` | None | No Android app |
 | **Background Jobs** | `app/jobs/` | arq | No async processing needed |
 | **Prometheus Metrics** | `app/core/metrics.py`, `app/api/v1/public/metrics.py` | prometheus-client | No metrics needed |
+| **Grafana Dashboards** | `grafana/dashboards/*.json`, `grafana/README.md` | None (Grafana external) | Not using Grafana |
 | **Sentry** | `app/core/sentry.py` | sentry-sdk | No error tracking needed |
 | **OpenTelemetry** | `app/core/tracing.py` | opentelemetry-* | No distributed tracing needed |
 | **Load Tests** | `tests/load/` | locust | No load testing |

@@ -393,6 +393,49 @@ Each entry follows this format:
 
 ---
 
+#### 2026-01-11 - Phase 12.5 Enhanced Metrics Complete
+
+**Added:**
+- `app/core/metrics.py` - Enhanced with comprehensive metrics:
+  - System metrics: `process_memory_bytes`, `process_cpu_seconds_total`, `process_open_fds`, `process_threads`, `app_uptime_seconds`, `system_info`
+  - Authentication metrics: `auth_events_total`, `auth_failures_total`, `token_operations_total`, `active_sessions`
+  - Rate limiting metrics: `rate_limit_hits_total`
+  - WebSocket metrics: `websocket_connections`, `websocket_messages_total`
+  - Webhook metrics: `webhook_events_total`, `webhook_processing_duration_seconds`
+  - `MetricsMiddleware` - ASGI middleware for automatic HTTP request tracking
+  - `update_system_metrics()` - Periodic system metrics collection
+  - `collect_metrics_snapshot()` - Health check snapshot
+  - `init_metrics()` - Initialization function
+- `grafana/dashboards/api-overview.json` - API metrics dashboard:
+  - Request rate, P95 latency, error rate, requests in progress
+  - Request rate by method, latency percentiles
+  - Request rate by status code, top endpoints
+- `grafana/dashboards/database-redis.json` - Database/cache dashboard:
+  - Active connections, query latency, error rate
+  - Connection pool status, queries by operation
+  - Cache hit rate, Redis connections
+- `grafana/dashboards/business-metrics.json` - Business KPIs dashboard:
+  - Users, subscriptions by plan, daily signups
+  - Background jobs queue, completion rate, duration
+  - LLM requests, token usage, latency by provider
+- `grafana/README.md` - Dashboard installation guide:
+  - Import instructions, provisioning config
+  - Docker Compose setup, variables, alerts
+- `tests/unit/test_metrics.py` - 54 unit tests:
+  - Request, database, cache, job metrics
+  - System, auth, rate limit, WebSocket, webhook metrics
+  - MetricsMiddleware, path normalization
+  - Metrics snapshot, initialization
+
+**Technical Notes:**
+- MetricsMiddleware normalizes paths (UUIDs/numeric IDs → `{id}`)
+- System metrics use `/proc/self/status` on Linux, `resource` module on macOS
+- All metrics have graceful fallback when prometheus_client not installed
+- Grafana dashboards use Prometheus datasource with configurable job filter
+- Dashboard provisioning supported via YAML config files
+
+---
+
 ## Release History
 
 ### v1.0.0 (Planned)
@@ -423,10 +466,11 @@ Each entry follows this format:
 - ✅ Admin dashboard endpoints (stats, audit logs)
 - ✅ Feature flags (boolean, percentage, user_list, plan_based)
 - ✅ OpenTelemetry tracing (OTLP, Zipkin, Console exporters)
+- ✅ Enhanced Prometheus metrics (system, auth, WebSocket, webhook)
+- ✅ Grafana dashboards (API, Database, Business)
 - ✅ Contact form with spam protection
 
 **Remaining Features:**
-- 🔴 Enhanced Prometheus metrics (Grafana dashboards)
 - 🔴 Usage-based billing (Stripe usage reports)
 - 🔴 SQLite fallback (offline development)
 
