@@ -178,6 +178,16 @@ RATE_LIMIT_AI="10/minute"
 RATE_LIMIT_AUTH="5/minute"
 
 # ============================================
+# CONTACT FORM (Optional)
+# ============================================
+CONTACT_REQUIRE_SUBJECT="false"        # Make subject required
+CONTACT_REQUIRE_PHONE="false"          # Make phone required
+CONTACT_SEND_CONFIRMATION="true"       # Send confirmation to sender
+CONTACT_WEBHOOK_URL=""                 # CRM webhook URL
+CONTACT_RATE_LIMIT="5/hour"            # Rate limit per IP
+ADMIN_EMAIL=""                         # Admin notification email
+
+# ============================================
 # CORS
 # ============================================
 BACKEND_CORS_ORIGINS='["http://localhost:3000"]'

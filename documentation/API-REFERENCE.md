@@ -14,11 +14,13 @@ Complete API documentation for OmniStack Backend.
 6. [Rate Limiting](#rate-limiting)
 7. [Endpoints](#endpoints)
    - [Health](#health-endpoints)
+   - [Contact Form](#contact-form-endpoints)
    - [Users](#user-endpoints)
    - [Projects](#project-endpoints)
    - [Files](#file-endpoints)
    - [AI](#ai-endpoints)
    - [Billing](#billing-endpoints)
+   - [WebSocket](#websocket-endpoints)
    - [Admin](#admin-endpoints)
    - [Webhooks](#webhook-endpoints)
 
@@ -39,6 +41,7 @@ Production:  https://your-domain.com/api/v1
 /api/v1/
 ├── public/          # No authentication required
 │   ├── health       # Health checks
+│   ├── contact      # Contact form submissions
 │   ├── webhooks/    # External service webhooks
 │   └── metrics      # Prometheus metrics
 │
@@ -47,11 +50,15 @@ Production:  https://your-domain.com/api/v1
 │   ├── projects/    # Project CRUD
 │   ├── files/       # File upload/download
 │   ├── ai/          # AI completions
-│   └── billing/     # Subscription management
+│   ├── billing/     # Subscription management
+│   └── ws           # WebSocket connections
 │
 └── admin/           # Authentication + Admin role required
     ├── users/       # User management
-    └── jobs/        # Background job monitoring
+    ├── jobs/        # Background job monitoring
+    ├── dashboard/   # System metrics & stats
+    ├── feature-flags/ # Feature flag management
+    └── impersonate/ # User impersonation
 ```
 
 ### HTTP Methods Convention
@@ -348,6 +355,134 @@ GET /api/v1/public/health/ready
   }
 }
 ```
+
+---
+
+### Contact Form Endpoints
+
+Public endpoints for contact form submissions. No authentication required.
+
+#### Submit Contact Form
+
+```http
+POST /api/v1/public/contact
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "message": "I'd like to learn more about your services.",
+  "subject": "Product Inquiry",
+  "phone": "+1-555-0123",
+  "company": "Acme Inc",
+  "extra_fields": {
+    "budget": "$5000-$10000",
+    "project_type": "web-app",
+    "referral_source": "google"
+  },
+  "source": "homepage"
+}
+```
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Sender's name (2-100 chars) |
+| `email` | string | Yes | Sender's email address |
+| `message` | string | Yes | Message content (10-5000 chars) |
+| `subject` | string | Configurable | Message subject (max 200 chars) |
+| `phone` | string | Configurable | Phone number (max 50 chars) |
+| `company` | string | No | Company name (max 200 chars) |
+| `extra_fields` | object | No | Custom fields (any key-value pairs) |
+| `source` | string | No | Form source for analytics (max 100 chars) |
+
+> **Note:** `subject` and `phone` can be made required via `CONTACT_REQUIRE_SUBJECT` and `CONTACT_REQUIRE_PHONE` settings.
+
+**Response (200)**
+```json
+{
+  "success": true,
+  "message": "Thank you for your message. We'll get back to you soon!",
+  "reference_id": "CNT-A1B2C3D4"
+}
+```
+
+**Error Response (429 - Rate Limited)**
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many contact form submissions. Please try again later.",
+    "details": { "retry_after": 3600 }
+  }
+}
+```
+
+#### Get Contact Form Status
+
+```http
+GET /api/v1/public/contact/status
+```
+
+**Response (200)**
+```json
+{
+  "available": true,
+  "rate_limit": {
+    "limit": 5,
+    "remaining": 4,
+    "reset": 1704110400,
+    "window": "5/hour"
+  },
+  "config": {
+    "require_subject": false,
+    "require_phone": false,
+    "sends_confirmation": true
+  }
+}
+```
+
+#### Configuration
+
+| Environment Variable | Default | Description |
+|---------------------|---------|-------------|
+| `CONTACT_REQUIRE_SUBJECT` | `false` | Make subject field required |
+| `CONTACT_REQUIRE_PHONE` | `false` | Make phone field required |
+| `CONTACT_SEND_CONFIRMATION` | `true` | Send confirmation email to sender |
+| `CONTACT_WEBHOOK_URL` | - | Webhook URL for CRM integrations |
+| `CONTACT_RATE_LIMIT` | `5/hour` | Rate limit per IP address |
+| `ADMIN_EMAIL` | - | Admin notification email |
+
+#### Webhook Integration
+
+When `CONTACT_WEBHOOK_URL` is set, submissions are sent to your webhook:
+
+```json
+{
+  "event": "contact.submitted",
+  "timestamp": "2026-01-11T12:00:00Z",
+  "data": {
+    "reference_id": "CNT-A1B2C3D4",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1-555-0123",
+    "company": "Acme Inc",
+    "subject": "Product Inquiry",
+    "message": "I'd like to learn more...",
+    "extra_fields": { "budget": "$5000-$10000" },
+    "source": "homepage",
+    "submitted_at": "2026-01-11T12:00:00Z"
+  }
+}
+```
+
+**Webhook Headers**
+
+| Header | Description |
+|--------|-------------|
+| `X-Webhook-Signature` | SHA256 signature for verification |
+| `X-Reference-Id` | Submission reference ID |
 
 ---
 
@@ -867,6 +1002,116 @@ Authorization: Bearer <token>
 
 ---
 
+### WebSocket Endpoints
+
+Real-time communication via WebSocket connections.
+
+#### Connect to WebSocket
+
+```
+WebSocket: ws://localhost:8000/api/v1/app/ws?token=<jwt_token>
+```
+
+**Connection Query Parameters**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `token` | Yes | JWT Bearer token for authentication |
+
+**Connection Events**
+
+On successful connection:
+```json
+{
+  "type": "connected",
+  "data": {
+    "user_id": "user_123abc",
+    "connected_at": "2026-01-11T12:00:00Z"
+  }
+}
+```
+
+#### Sending Messages
+
+**Subscribe to Channel**
+```json
+{
+  "type": "subscribe",
+  "channel": "project:proj_123"
+}
+```
+
+**Unsubscribe from Channel**
+```json
+{
+  "type": "unsubscribe",
+  "channel": "project:proj_123"
+}
+```
+
+**Send Message to Channel**
+```json
+{
+  "type": "message",
+  "channel": "project:proj_123",
+  "data": {
+    "action": "update",
+    "content": "Hello team!"
+  }
+}
+```
+
+#### Receiving Events
+
+**Channel Message**
+```json
+{
+  "type": "channel_message",
+  "channel": "project:proj_123",
+  "data": { ... },
+  "sender_id": "user_456def",
+  "timestamp": "2026-01-11T12:00:00Z"
+}
+```
+
+**System Notification**
+```json
+{
+  "type": "notification",
+  "data": {
+    "title": "New comment",
+    "message": "Someone commented on your project"
+  }
+}
+```
+
+**Error Event**
+```json
+{
+  "type": "error",
+  "message": "Invalid channel format",
+  "code": "INVALID_CHANNEL"
+}
+```
+
+#### Broadcast Message (Server-side)
+
+From your code, broadcast to connected users:
+
+```python
+from app.services.websocket import get_ws_manager
+
+manager = get_ws_manager()
+
+# Broadcast to specific user
+await manager.send_to_user(user_id, {"type": "notification", "data": {...}})
+
+# Broadcast to channel
+await manager.broadcast_to_channel("project:proj_123", {"type": "update", "data": {...}})
+```
+
+---
+
 ### Admin Endpoints
 
 > **Note:** All admin endpoints require `Authorization` header AND user must have `admin` or `superadmin` role.
@@ -926,6 +1171,203 @@ Authorization: Bearer <admin_token>
 ```http
 POST /api/v1/admin/jobs/{job_id}/retry
 Authorization: Bearer <admin_token>
+```
+
+#### Dashboard Statistics
+
+```http
+GET /api/v1/admin/dashboard/stats
+Authorization: Bearer <admin_token>
+```
+
+**Response (200)**
+```json
+{
+  "users": {
+    "total": 1250,
+    "active": 1100,
+    "new_last_7_days": 45,
+    "new_last_30_days": 180
+  },
+  "subscriptions": {
+    "active": 450,
+    "by_plan": {
+      "free": 800,
+      "pro": 350,
+      "enterprise": 100
+    }
+  },
+  "webhooks": {
+    "total": 5000,
+    "failed": 12,
+    "pending": 3
+  },
+  "jobs": {
+    "queued": 25,
+    "completed_last_24h": 1500,
+    "failed_last_24h": 5
+  }
+}
+```
+
+#### List Feature Flags
+
+```http
+GET /api/v1/admin/feature-flags
+Authorization: Bearer <admin_token>
+```
+
+**Response (200)**
+```json
+{
+  "items": [
+    {
+      "id": "flag_123",
+      "key": "new_dashboard",
+      "name": "New Dashboard UI",
+      "description": "Enable the redesigned dashboard",
+      "flag_type": "percentage",
+      "is_enabled": true,
+      "percentage": 25,
+      "user_ids": [],
+      "plans": [],
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+#### Create Feature Flag
+
+```http
+POST /api/v1/admin/feature-flags
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "key": "beta_feature",
+  "name": "Beta Feature",
+  "description": "New experimental feature",
+  "flag_type": "percentage",
+  "percentage": 10,
+  "is_enabled": true
+}
+```
+
+**Flag Types**
+
+| Type | Description |
+|------|-------------|
+| `boolean` | Simple on/off toggle |
+| `percentage` | Roll out to % of users |
+| `user_list` | Enable for specific user IDs |
+| `plan_based` | Enable for specific subscription plans |
+
+#### Update Feature Flag
+
+```http
+PATCH /api/v1/admin/feature-flags/{flag_id}
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "percentage": 50,
+  "is_enabled": true
+}
+```
+
+#### Delete Feature Flag
+
+```http
+DELETE /api/v1/admin/feature-flags/{flag_id}
+Authorization: Bearer <admin_token>
+```
+
+#### Check Feature Flag
+
+```http
+GET /api/v1/admin/feature-flags/{flag_key}/check?user_id=user_123
+Authorization: Bearer <admin_token>
+```
+
+**Response (200)**
+```json
+{
+  "flag_key": "new_dashboard",
+  "is_enabled": true,
+  "reason": "percentage_rollout"
+}
+```
+
+#### Impersonate User
+
+```http
+POST /api/v1/admin/impersonate/start
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "user_id": "user_123abc"
+}
+```
+
+**Response (200)**
+```json
+{
+  "message": "Impersonation started",
+  "impersonated_user": {
+    "id": "user_123abc",
+    "email": "user@example.com",
+    "full_name": "John Doe"
+  },
+  "token": "<impersonation_jwt_token>",
+  "expires_at": "2026-01-11T13:00:00Z"
+}
+```
+
+> **Note:** Impersonation is logged in the audit log. Admins cannot impersonate other admins or superadmins.
+
+#### Stop Impersonation
+
+```http
+POST /api/v1/admin/impersonate/stop
+Authorization: Bearer <impersonation_token>
+```
+
+#### Get Audit Logs
+
+```http
+GET /api/v1/admin/dashboard/audit-logs?limit=50
+Authorization: Bearer <admin_token>
+```
+
+**Query Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `actor_id` | string | Filter by actor user ID |
+| `action` | string | Filter by action type |
+| `resource_type` | string | Filter by resource type |
+| `limit` | integer | Max results (default: 50) |
+
+**Response (200)**
+```json
+{
+  "items": [
+    {
+      "id": "log_123",
+      "actor_id": "admin_456",
+      "action": "impersonate.start",
+      "resource_type": "user",
+      "resource_id": "user_789",
+      "details": { "reason": "Support ticket #123" },
+      "ip_address": "192.168.1.1",
+      "created_at": "2026-01-11T12:00:00Z"
+    }
+  ],
+  "total": 1
+}
 ```
 
 ---

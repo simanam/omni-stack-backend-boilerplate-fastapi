@@ -69,12 +69,24 @@ make dev
 - Rate limiting (Redis-backed)
 - Request/Response logging
 - Security headers (CORS, CSP, HSTS)
+- WebSocket support for real-time features
 
 ### External Services (Pluggable)
 - **AI Gateway**: OpenAI, Anthropic, Google Gemini
 - **Email**: Resend, SendGrid
 - **Storage**: AWS S3, Cloudflare R2, Cloudinary
 - **Payments**: Stripe (web), Apple IAP, Google Play
+
+### Admin Features
+- Dashboard with system metrics
+- Feature flags (boolean, percentage, user-based, plan-based)
+- User impersonation for support
+- Audit logging
+
+### Public Endpoints
+- Contact form with modular fields
+- CRM webhook integration (Zapier/Make/n8n compatible)
+- Confirmation emails
 
 ### Observability
 - Prometheus metrics
@@ -127,6 +139,7 @@ Comprehensive documentation available online and in the [`documentation/`](./doc
 /api/v1/
 ├── public/          # No authentication required
 │   ├── health       # Health checks
+│   ├── contact      # Contact form submissions
 │   ├── webhooks/    # Stripe, Supabase, Clerk webhooks
 │   └── metrics      # Prometheus metrics
 │
@@ -135,11 +148,15 @@ Comprehensive documentation available online and in the [`documentation/`](./doc
 │   ├── projects/    # Project CRUD
 │   ├── files/       # File upload/download
 │   ├── ai/          # AI completions
-│   └── billing/     # Subscriptions
+│   ├── billing/     # Subscriptions
+│   └── ws           # WebSocket connections
 │
 └── admin/           # Admin role required
     ├── users/       # User management
-    └── jobs/        # Background job monitoring
+    ├── jobs/        # Background job monitoring
+    ├── dashboard/   # System metrics & stats
+    ├── feature-flags/ # Feature flag management
+    └── impersonate/ # User impersonation
 ```
 
 ---
@@ -161,7 +178,8 @@ backend-boilerplate-fastapi/
 │   │   ├── ai/              # OpenAI, Anthropic, Gemini
 │   │   ├── email/           # Resend, SendGrid
 │   │   ├── storage/         # S3, R2, Cloudinary
-│   │   └── payments/        # Stripe, Apple IAP, Google IAP
+│   │   ├── payments/        # Stripe, Apple IAP, Google IAP
+│   │   └── websocket/       # Real-time WebSocket manager
 │   └── jobs/                # Background tasks (ARQ)
 ├── migrations/              # Alembic migrations
 ├── tests/                   # Test suite
