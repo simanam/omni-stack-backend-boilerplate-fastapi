@@ -89,9 +89,10 @@ make dev
 - Confirmation emails
 
 ### Observability
+- OpenTelemetry distributed tracing (OTLP, Zipkin)
 - Prometheus metrics
 - Sentry error tracking
-- Structured JSON logging
+- Structured JSON logging with trace correlation
 
 ---
 

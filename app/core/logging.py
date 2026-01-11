@@ -1,6 +1,7 @@
 """
 Structured logging configuration for production environments.
 Provides JSON-formatted logs with request context and service metadata.
+Includes OpenTelemetry trace correlation.
 """
 
 import json
@@ -64,6 +65,13 @@ class JSONFormatter(logging.Formatter):
         if user_id:
             log_data["user_id"] = user_id
 
+        # Add OpenTelemetry trace context if available
+        trace_id, span_id = self._get_trace_context()
+        if trace_id:
+            log_data["trace_id"] = trace_id
+        if span_id:
+            log_data["span_id"] = span_id
+
         # Add exception info if present
         if record.exc_info:
             log_data["exception"] = {
@@ -77,6 +85,15 @@ class JSONFormatter(logging.Formatter):
             log_data["extra"] = record.extra_data
 
         return json.dumps(log_data, default=str)
+
+    def _get_trace_context(self) -> tuple[str | None, str | None]:
+        """Get current trace and span IDs from OpenTelemetry context."""
+        try:
+            from app.core.tracing import get_current_span_id, get_current_trace_id
+
+            return get_current_trace_id(), get_current_span_id()
+        except ImportError:
+            return None, None
 
 
 class DevelopmentFormatter(logging.Formatter):
@@ -103,10 +120,15 @@ class DevelopmentFormatter(logging.Formatter):
         request_id = request_id_ctx.get()
         user_id = user_id_ctx.get()
 
+        # Get trace context
+        trace_id, span_id = self._get_trace_context()
+
         # Build prefix with context
         prefix_parts = []
         if request_id:
             prefix_parts.append(f"[{request_id[:8]}]")
+        if trace_id:
+            prefix_parts.append(f"[trace:{trace_id[:8]}]")
         if user_id:
             prefix_parts.append(f"[user:{user_id[:8]}]")
         prefix = " ".join(prefix_parts)
@@ -122,6 +144,15 @@ class DevelopmentFormatter(logging.Formatter):
             message += f"\n{self.formatException(record.exc_info)}"
 
         return message
+
+    def _get_trace_context(self) -> tuple[str | None, str | None]:
+        """Get current trace and span IDs from OpenTelemetry context."""
+        try:
+            from app.core.tracing import get_current_span_id, get_current_trace_id
+
+            return get_current_trace_id(), get_current_span_id()
+        except ImportError:
+            return None, None
 
 
 def setup_logging(

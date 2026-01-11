@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     # --- API ---
     API_V1_STR: str = "/api/v1"
+    API_V2_STR: str = "/api/v2"
     BACKEND_CORS_ORIGINS: str = '["http://localhost:3000"]'
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
@@ -165,6 +166,14 @@ class Settings(BaseSettings):
     # --- Observability ---
     SENTRY_DSN: str | None = None
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+
+    # --- OpenTelemetry Tracing ---
+    OTEL_ENABLED: bool = False
+    OTEL_SERVICE_NAME: str | None = None  # Defaults to PROJECT_NAME
+    OTEL_EXPORTER: Literal["otlp", "console", "zipkin", "none"] = "otlp"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = None  # e.g., "http://localhost:4317"
+    OTEL_EXPORTER_ZIPKIN_ENDPOINT: str | None = None  # e.g., "http://localhost:9411/api/v2/spans"
+    OTEL_TRACES_SAMPLER_ARG: float = 1.0  # Sampling rate (0.0 to 1.0)
 
     # --- Rate Limiting ---
     RATE_LIMIT_DEFAULT: str = "60/minute"

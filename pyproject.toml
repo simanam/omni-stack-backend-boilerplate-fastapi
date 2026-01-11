@@ -75,11 +75,21 @@ observability = [
     "sentry-sdk[fastapi]>=2.18.0",
     "prometheus-client>=0.21.0",
 ]
+tracing = [
+    "opentelemetry-api>=1.27.0",
+    "opentelemetry-sdk>=1.27.0",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.48b0",
+    "opentelemetry-instrumentation-redis>=0.48b0",
+    "opentelemetry-instrumentation-httpx>=0.48b0",
+    "opentelemetry-exporter-otlp>=1.27.0",
+    "opentelemetry-exporter-zipkin>=1.27.0",
+]
 loadtest = [
     "locust>=2.31.0",
 ]
 all = [
-    "omnistack-backend[dev,ai,email,storage,payments,observability]",
+    "omnistack-backend[dev,ai,email,storage,payments,observability,tracing]",
 ]
 
 [project.urls]

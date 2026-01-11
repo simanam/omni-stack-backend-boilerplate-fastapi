@@ -18,10 +18,10 @@
 |--------|-------|
 | **Current Phase** | Phase 12: Advanced (v1.1) - In Progress |
 | **v1.0 Status** | ✅ Complete (Phases 1-11) |
-| **v1.1 Progress** | 3/8 features complete (WebSocket, Admin Dashboard, Contact Form) |
-| **Overall Progress** | 118/123 tasks (96%) |
+| **v1.1 Progress** | 5/8 features complete (API Versioning, WebSocket, Admin Dashboard, OpenTelemetry, Contact Form) |
+| **Overall Progress** | 120/123 tasks (98%) |
 | **v1.0 Progress** | 115/115 tasks (100%) |
-| **Unit Tests** | 222 passing |
+| **Unit Tests** | 300+ passing |
 | **Documentation** | [Live on GitHub Pages](https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/) |
 | **License** | MIT |
 
@@ -78,7 +78,7 @@
 | 9 | Testing | 12 | ✅ Complete |
 | 10 | Deployment | 13 | ✅ Complete |
 | 11 | Documentation | 10 | ✅ Complete |
-| 12 | Advanced (v1.1) | 8 | 🟡 3/8 Complete |
+| 12 | Advanced (v1.1) | 8 | 🟡 5/8 Complete |
 
 ---
 
@@ -597,6 +597,49 @@
 
 ---
 
+## Phase 12.1 Complete - API Versioning
+
+### Files Created
+- `app/core/versioning.py` - Version utilities:
+  - `APIVersion` enum (V1, V2) with parsing
+  - `get_version_from_path()` - Extract version from URL
+  - `get_version_from_header()` - Support Accept-Version, X-API-Version headers
+  - `VersionInfo` - Deprecation info container
+  - `add_version_headers()` - RFC 8594 compliant headers
+  - `VersionMiddleware` - Auto-add version headers to responses
+- `app/api/v2/__init__.py` - Version 2 package
+- `app/api/v2/router.py` - v2 router aggregation
+- `app/api/v2/public/health.py` - Enhanced health endpoints with latency metrics
+- `app/api/v2/app/users.py` - User endpoints with metadata wrapper
+- `tests/unit/test_versioning.py` - 38 unit tests
+
+### Features
+- Path-based version detection (`/api/v1/...`, `/api/v2/...`)
+- Header-based version detection (Accept-Version, X-API-Version)
+- Response headers: `X-API-Version`, `X-API-Latest-Version`
+- Deprecation support: `Deprecation`, `Sunset`, `X-Deprecation-Notice`, `Link`
+- v2 response format with metadata wrapper
+
+### v2 Enhanced Response Format
+```json
+{
+  "data": { ... },
+  "meta": {
+    "request_id": "uuid",
+    "timestamp": "2026-01-11T12:00:00Z",
+    "version": "v2"
+  }
+}
+```
+
+### New v2 Endpoints
+- `GET /api/v2/public/health` - Enhanced with uptime, service info
+- `GET /api/v2/public/health/ready` - Enhanced with latency metrics
+- `GET /api/v2/app/users/me` - User profile with metadata wrapper
+- `PATCH /api/v2/app/users/me` - Update profile with metadata wrapper
+
+---
+
 ## Phase 12.2 Complete - WebSocket Support
 
 ### Files Created
@@ -665,6 +708,60 @@
 
 ---
 
+## Phase 12.4 Complete - OpenTelemetry Tracing
+
+### Files Created
+- `app/core/tracing.py` - OpenTelemetry setup:
+  - `init_tracing()` - Initialize OpenTelemetry SDK
+  - `instrument_app()` - FastAPI instrumentation
+  - `instrument_sqlalchemy()` - Database query tracing
+  - `instrument_redis()` - Redis operations tracing
+  - `instrument_httpx()` - HTTP client tracing
+  - `create_span()` - Manual span creation context manager
+  - `@trace_function` - Function decorator for tracing
+  - `get_current_trace_id()`, `get_current_span_id()` - Trace context access
+  - `set_span_attribute()`, `set_span_status()`, `record_exception()` - Span helpers
+  - NoOp implementations for graceful fallback
+- `tests/unit/test_tracing.py` - 38 unit tests
+
+### Features
+- Auto-instrumentation for FastAPI, SQLAlchemy, Redis, httpx
+- Manual span creation via `create_span()` context manager
+- Function decorator `@trace_function` for tracing functions
+- Multiple exporter support: OTLP, Zipkin, Console
+- W3C Trace Context propagation
+- Trace ID and span ID correlation in logs
+- Graceful fallback when OpenTelemetry not installed
+
+### Configuration
+```bash
+OTEL_ENABLED=true                           # Enable/disable tracing
+OTEL_SERVICE_NAME=my-service                # Service name in traces
+OTEL_EXPORTER=otlp                          # otlp, console, zipkin, none
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317  # OTLP collector endpoint
+OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://localhost:9411/api/v2/spans  # Zipkin endpoint
+OTEL_TRACES_SAMPLER_ARG=1.0                 # Sampling rate (0.0 to 1.0)
+```
+
+### Usage
+```python
+# Manual span creation
+from app.core.tracing import create_span, set_span_attribute
+
+with create_span("process_order", {"order_id": "123"}):
+    set_span_attribute("customer_id", "456")
+    # do work
+
+# Function decorator
+from app.core.tracing import trace_function
+
+@trace_function("custom_operation", {"component": "orders"})
+async def process_order(order_id: str):
+    ...
+```
+
+---
+
 ## Phase 12.6 Complete - Contact Form (Enhanced)
 
 ### Files Created
@@ -707,17 +804,17 @@ CONTACT_RATE_LIMIT="5/hour"             # Rate limit per IP
 ## What To Do Next: Phase 12 (Remaining Features)
 
 ### Completed
+- ✅ **12.1 API Versioning** - v1/v2 routing, deprecation headers, version middleware
 - ✅ **12.2 WebSocket Support** - Real-time communication
 - ✅ **12.3 Admin Dashboard** - Stats, feature flags, impersonation, audit logs
+- ✅ **12.4 OpenTelemetry** - Distributed tracing with OTLP/Zipkin export, log correlation
 - ✅ **12.6 Contact Form** - Public endpoint with spam protection
 
 ### Remaining Optional Features
 
-1. **12.1 API Versioning** - v1/v2 routing, deprecation headers
-2. **12.4 OpenTelemetry** - Distributed tracing
-3. **12.5 Enhanced Metrics** - Grafana dashboards
-4. **12.7 Usage-Based Billing** - Track and report usage to Stripe
-5. **12.8 SQLite Fallback** - Offline development support
+1. **12.5 Enhanced Metrics** - Grafana dashboards
+2. **12.7 Usage-Based Billing** - Track and report usage to Stripe
+3. **12.8 SQLite Fallback** - Offline development support
 
 ### Note
 

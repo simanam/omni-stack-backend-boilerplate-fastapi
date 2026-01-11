@@ -15,7 +15,8 @@ Complete guide to the system architecture, design patterns, and code conventions
 7. [Authentication Flow](#authentication-flow)
 8. [Error Handling](#error-handling)
 9. [Service Adapters](#service-adapters)
-10. [Adding New Features](#adding-new-features)
+10. [Observability](#observability)
+11. [Adding New Features](#adding-new-features)
 
 ---
 
@@ -78,6 +79,7 @@ app/
 │   ├── middleware.py          # HTTP middleware
 │   ├── sentry.py              # Error tracking
 │   ├── metrics.py             # Prometheus metrics
+│   ├── tracing.py             # OpenTelemetry tracing
 │   └── logging.py             # Structured logging
 │
 ├── models/                    # Database Models (SQLModel)
@@ -720,6 +722,74 @@ def get_email_service() -> BaseEmailService:
 | Storage | S3, R2, Cloudinary, Local | `STORAGE_PROVIDER` |
 | AI | OpenAI, Anthropic, Gemini | `AI_DEFAULT_PROVIDER` |
 | Payments | Stripe, Apple IAP, Google Play | N/A |
+
+---
+
+## Observability
+
+### Components
+
+| Component | Purpose | Module |
+|-----------|---------|--------|
+| **Logging** | Structured JSON logs with request context | `app/core/logging.py` |
+| **Tracing** | Distributed tracing with OpenTelemetry | `app/core/tracing.py` |
+| **Metrics** | Prometheus metrics for monitoring | `app/core/metrics.py` |
+| **Error Tracking** | Exception tracking with Sentry | `app/core/sentry.py` |
+
+### Distributed Tracing (OpenTelemetry)
+
+Tracing is integrated at multiple levels:
+
+```
+Request Flow with Tracing:
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Client    │───▶│  FastAPI    │───▶│  Database   │───▶│  External   │
+│  (trace_id) │    │  (span)     │    │  (span)     │    │  (span)     │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+                          │
+                          ▼
+                   ┌─────────────┐
+                   │   Redis     │
+                   │   (span)    │
+                   └─────────────┘
+```
+
+**Auto-instrumented:**
+- FastAPI HTTP requests
+- SQLAlchemy database queries
+- Redis operations
+- httpx external calls
+
+**Manual tracing:**
+
+```python
+from app.core.tracing import create_span, trace_function, set_span_attribute
+
+# Context manager
+with create_span("process_payment", {"order_id": order_id}):
+    set_span_attribute("amount", amount)
+    # ... processing logic
+
+# Decorator
+@trace_function("send_notification")
+async def send_notification(user_id: str, message: str):
+    ...
+```
+
+### Log Correlation
+
+All logs include trace context when OpenTelemetry is enabled:
+
+```json
+{
+  "timestamp": "2026-01-11T12:00:00Z",
+  "level": "INFO",
+  "message": "Order processed",
+  "trace_id": "abc123def456...",
+  "span_id": "1234567890ab",
+  "request_id": "550e8400-..."
+}
+```
 
 ---
 

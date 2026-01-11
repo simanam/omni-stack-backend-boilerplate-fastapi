@@ -9,12 +9,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
+from app.api.v2.router import api_v2_router
 from app.core.cache import close_redis, init_redis
 from app.core.config import settings
 from app.core.exceptions import AppException, app_exception_handler
 from app.core.logging import get_logger, setup_logging
 from app.core.middleware import register_middleware
 from app.core.sentry import init_sentry
+from app.core.tracing import (
+    init_tracing,
+    instrument_app,
+    instrument_httpx,
+    instrument_redis,
+    shutdown_tracing,
+)
+from app.core.versioning import VersionMiddleware
 from app.services.websocket import connection_manager
 
 # Configure structured logging
@@ -23,6 +32,13 @@ logger = get_logger(__name__)
 
 # Initialize Sentry (if configured)
 init_sentry()
+
+# Initialize OpenTelemetry tracing (if configured)
+init_tracing()
+
+# Instrument httpx and redis globally (before app creation)
+instrument_httpx()
+instrument_redis()
 
 
 @asynccontextmanager
@@ -49,6 +65,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await connection_manager.stop()
 
     await close_redis()
+
+    # Shutdown OpenTelemetry (flush pending spans)
+    shutdown_tracing()
 
 
 def create_app() -> FastAPI:
@@ -86,11 +105,18 @@ def create_app() -> FastAPI:
     # Register custom middleware (rate limiting, security headers, request ID, logging)
     register_middleware(app)
 
+    # Add version middleware for deprecation headers
+    app.add_middleware(VersionMiddleware)
+
     # Register exception handlers
     app.add_exception_handler(AppException, app_exception_handler)
 
-    # Include API router
+    # Include API routers (v1 and v2)
     app.include_router(api_router)
+    app.include_router(api_v2_router)
+
+    # Instrument FastAPI with OpenTelemetry (after adding routes)
+    instrument_app(app)
 
     return app
 

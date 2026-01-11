@@ -89,6 +89,7 @@ These are the foundation - always keep them:
 | **Background Jobs** | `app/jobs/` | arq | No async processing needed |
 | **Prometheus Metrics** | `app/core/metrics.py`, `app/api/v1/public/metrics.py` | prometheus-client | No metrics needed |
 | **Sentry** | `app/core/sentry.py` | sentry-sdk | No error tracking needed |
+| **OpenTelemetry** | `app/core/tracing.py` | opentelemetry-* | No distributed tracing needed |
 | **Load Tests** | `tests/load/` | locust | No load testing |
 
 ---
@@ -351,12 +352,22 @@ rm -rf app/jobs
 ```bash
 # Remove Sentry
 rm app/core/sentry.py
-# Update main.py - remove sentry init
+# Update main.py - remove init_sentry() call
 
 # Remove Metrics
 rm app/core/metrics.py
 rm app/api/v1/public/metrics.py
 # Update router.py - remove metrics router
+
+# Remove OpenTelemetry Tracing
+rm app/core/tracing.py
+# Update main.py - remove tracing imports and calls:
+#   - init_tracing()
+#   - instrument_app()
+#   - instrument_httpx()
+#   - instrument_redis()
+#   - shutdown_tracing()
+# Update app/core/logging.py - remove _get_trace_context() method
 ```
 
 ---

@@ -232,7 +232,164 @@ Each entry follows this format:
 
 ## Phase 12: Advanced Features
 
-*Not started*
+#### 2026-01-11 - Phase 12.1 API Versioning Complete
+
+**Added:**
+- `app/core/versioning.py` - Version utilities:
+  - `APIVersion` enum (V1, V2) with parsing from various formats
+  - `get_version_from_path()` - Extract version from URL `/api/v1/...`
+  - `get_version_from_header()` - Support Accept-Version, X-API-Version headers
+  - `VersionInfo` dataclass for deprecation metadata
+  - `add_version_headers()` - RFC 8594 compliant response headers
+  - `VersionMiddleware` - Auto-add version headers to responses
+- `app/api/v2/__init__.py` - Version 2 package initialization
+- `app/api/v2/router.py` - v2 router aggregation
+- `app/api/v2/public/__init__.py` - v2 public endpoints package
+- `app/api/v2/public/health.py` - Enhanced health endpoints with uptime and latency
+- `app/api/v2/app/__init__.py` - v2 app endpoints package
+- `app/api/v2/app/users.py` - User endpoints with metadata wrapper response
+- `tests/unit/test_versioning.py` - 38 unit tests for versioning
+
+**Changed:**
+- `app/main.py` - Added v2 router and version middleware registration
+- `app/core/config.py` - Added `API_V2_STR` configuration
+
+**Technical Notes:**
+- Version detection: path-based (primary), header-based (fallback)
+- Response headers: `X-API-Version`, `X-API-Latest-Version`
+- Deprecation headers: `Deprecation`, `Sunset`, `X-Deprecation-Notice`, `Link`
+- v2 response format wraps data with metadata (request_id, timestamp, version)
+
+---
+
+#### 2026-01-11 - Phase 12.2 WebSocket Support Complete
+
+**Added:**
+- `app/services/websocket/__init__.py` - Package exports
+- `app/services/websocket/manager.py` - Connection manager:
+  - `WebSocketManager` class with Redis pub/sub
+  - Connection tracking by user ID
+  - Channel/room subscriptions
+  - Broadcast to users, channels, or all
+  - Presence tracking (online users)
+  - Heartbeat/ping-pong support
+- `app/services/websocket/events.py` - Event types:
+  - `WebSocketEventType` enum (CONNECT, DISCONNECT, MESSAGE, etc.)
+  - `WebSocketMessage` schema for structured messages
+- `app/api/v1/app/ws.py` - WebSocket endpoints:
+  - `ws://host/api/v1/app/ws?token=<jwt>` - WebSocket connection
+  - `GET /api/v1/app/ws/status` - Connection statistics
+- `tests/unit/test_websocket.py` - 23 unit tests
+
+**Changed:**
+- `app/api/v1/router.py` - Added WebSocket router
+
+**Technical Notes:**
+- JWT authentication via query parameter (browsers can't set headers for WS)
+- Redis pub/sub enables multi-instance communication
+- Graceful degradation when Redis unavailable (single-instance mode)
+
+---
+
+#### 2026-01-11 - Phase 12.3 Admin Dashboard Complete
+
+**Added:**
+- `app/models/audit_log.py` - Audit log model:
+  - Tracks actor, action, resource, changes
+  - IP address and user agent capture
+  - JSONB for previous/new values
+- `app/models/feature_flag.py` - Feature flag model:
+  - Types: boolean, percentage, user_list, plan_based
+  - Enabled users list, allowed plans
+  - Expiration date support
+- `app/api/v1/admin/dashboard.py` - Dashboard endpoints:
+  - `GET /dashboard/stats` - System statistics
+  - `GET /dashboard/audit-logs` - Audit log listing
+  - `GET /dashboard/audit-logs/{id}` - Get audit log by ID
+- `app/api/v1/admin/feature_flags.py` - Feature flags CRUD:
+  - Full CRUD operations for feature flags
+  - Enable/disable, add/remove user
+  - Check flag status for specific user
+- `app/api/v1/admin/impersonate.py` - User impersonation:
+  - Start/stop impersonation with audit logging
+  - List active impersonations
+  - Role-based restrictions (can't impersonate higher roles)
+- `migrations/versions/20260111_100000_add_audit_log_and_feature_flag_models.py`
+- `tests/unit/test_admin_dashboard.py` - 31 unit tests
+
+**Changed:**
+- `app/api/v1/admin/__init__.py` - Added dashboard, feature_flags, impersonate routers
+
+**Technical Notes:**
+- Feature flag evaluation uses consistent hashing for percentage rollouts
+- Impersonation creates special JWT with original_user_id claim
+- Audit logs capture before/after state for changes
+
+---
+
+#### 2026-01-11 - Phase 12.4 OpenTelemetry Tracing Complete
+
+**Added:**
+- `app/core/tracing.py` - OpenTelemetry integration:
+  - `init_tracing()` - Initialize with configurable exporters
+  - `instrument_app()` - FastAPI auto-instrumentation
+  - `instrument_sqlalchemy()` - Database query tracing
+  - `instrument_redis()` - Redis operation tracing
+  - `instrument_httpx()` - External HTTP call tracing
+  - `create_span()` - Manual span creation context manager
+  - `trace_function()` - Decorator for function tracing
+  - `get_current_trace_id()`, `get_current_span_id()` - Context access
+  - `set_span_attribute()`, `set_span_status()`, `record_exception()` - Span helpers
+  - `_NoOpTracer`, `_NoOpSpan`, `_NoOpSpanContext` - Graceful fallback
+  - `shutdown_tracing()` - Clean shutdown
+- `tests/unit/test_tracing.py` - 38 unit tests
+
+**Changed:**
+- `app/core/config.py` - Added OpenTelemetry configuration:
+  - `OTEL_ENABLED`, `OTEL_SERVICE_NAME`
+  - `OTEL_EXPORTER` (otlp, console, zipkin, none)
+  - `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_ZIPKIN_ENDPOINT`
+  - `OTEL_TRACES_SAMPLER_ARG` (sampling rate 0.0-1.0)
+- `app/main.py` - Integrated tracing initialization and instrumentation
+- `app/core/logging.py` - Added trace context to log output (trace_id, span_id)
+- `pyproject.toml` - Added `tracing` optional dependency group
+- `.env.example` - Added OTEL configuration section
+
+**Technical Notes:**
+- Graceful fallback: works without OpenTelemetry installed (NoOp implementations)
+- Auto-instrumentation: FastAPI, SQLAlchemy, Redis, httpx
+- Exporters: OTLP (Jaeger, Tempo), Zipkin, Console (dev)
+- W3C Trace Context propagation for distributed tracing
+- Log correlation: trace_id and span_id automatically added to JSON logs
+
+---
+
+#### 2026-01-11 - Phase 12.6 Contact Form Complete
+
+**Added:**
+- `app/api/v1/public/contact.py` - Contact form endpoints:
+  - `POST /contact` - Submit contact form
+  - `GET /contact/status` - Check rate limit and config
+- `app/models/contact_submission.py` - ContactSubmission model:
+  - Required: name, email, message
+  - Optional: subject, phone, company (configurable as required)
+  - Custom: extra_fields dict for additional data
+  - Source tracking, admin notification, confirmation email
+- `migrations/versions/20260111_120000_add_contact_submission_model.py`
+- `tests/unit/test_contact.py` - 32 unit tests
+
+**Changed:**
+- `app/core/config.py` - Added contact form configuration:
+  - `CONTACT_REQUIRE_SUBJECT`, `CONTACT_REQUIRE_PHONE`
+  - `CONTACT_SEND_CONFIRMATION`, `CONTACT_WEBHOOK_URL`
+  - `CONTACT_RATE_LIMIT`, `ADMIN_EMAIL`
+- `app/api/v1/router.py` - Added contact router
+
+**Technical Notes:**
+- Spam protection: honeypot field + timing-based bot detection
+- Rate limiting: configurable per IP (default: 5/hour)
+- Webhooks: generic URL with HMAC signature (Zapier/Make/n8n compatible)
+- Confirmation emails: sent to sender with reference number
 
 ---
 
@@ -256,18 +413,22 @@ Each entry follows this format:
 
 ---
 
-### v1.1.0 (Planned)
+### v1.1.0 (In Progress)
 
 **Target:** After v1.0 stable
 
-**Features:**
-- API versioning (v1/v2)
-- WebSocket support
-- Admin dashboard endpoints
-- Feature flags
-- OpenTelemetry tracing
-- Enhanced Prometheus metrics
-- Usage-based billing
+**Completed Features:**
+- ✅ API versioning (v1/v2) with deprecation headers
+- ✅ WebSocket support with Redis pub/sub
+- ✅ Admin dashboard endpoints (stats, audit logs)
+- ✅ Feature flags (boolean, percentage, user_list, plan_based)
+- ✅ OpenTelemetry tracing (OTLP, Zipkin, Console exporters)
+- ✅ Contact form with spam protection
+
+**Remaining Features:**
+- 🔴 Enhanced Prometheus metrics (Grafana dashboards)
+- 🔴 Usage-based billing (Stripe usage reports)
+- 🔴 SQLite fallback (offline development)
 
 ---
 
@@ -283,4 +444,4 @@ Each entry follows this format:
 
 ---
 
-*Last Updated: 2026-01-10*
+*Last Updated: 2026-01-11*

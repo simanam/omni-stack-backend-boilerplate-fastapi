@@ -449,6 +449,59 @@ docker ps | grep redis
 
 ---
 
+## Observability Setup (Optional)
+
+### Distributed Tracing with OpenTelemetry
+
+Enable distributed tracing to track requests across services:
+
+```bash
+# Add to .env
+OTEL_ENABLED=true
+OTEL_SERVICE_NAME="my-api"
+OTEL_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
+```
+
+**Quick Start with Jaeger:**
+
+```bash
+# Start Jaeger (all-in-one)
+docker run -d --name jaeger \
+  -p 16686:16686 \
+  -p 4317:4317 \
+  jaegertracing/all-in-one:latest
+
+# View traces at http://localhost:16686
+```
+
+**Install tracing dependencies:**
+
+```bash
+pip install -e ".[tracing]"
+```
+
+For development, use console exporter to see traces in terminal:
+
+```bash
+OTEL_ENABLED=true
+OTEL_EXPORTER=console
+```
+
+### Error Tracking with Sentry
+
+```bash
+# Add to .env
+SENTRY_DSN="https://xxx@sentry.io/xxx"
+SENTRY_TRACES_SAMPLE_RATE=0.1  # Sample 10% of requests
+```
+
+### Prometheus Metrics
+
+Metrics are available at `/api/v1/public/metrics` for Prometheus scraping.
+
+---
+
 ## Next Steps
 
 1. **Configure Authentication**

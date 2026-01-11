@@ -31,9 +31,21 @@ Complete API documentation for OmniStack Backend.
 ### Base URL
 
 ```
-Development: http://localhost:8000/api/v1
-Production:  https://your-domain.com/api/v1
+Development: http://localhost:8000/api/v1  (or /api/v2)
+Production:  https://your-domain.com/api/v1  (or /api/v2)
 ```
+
+### API Versions
+
+| Version | Status | Description |
+|---------|--------|-------------|
+| v1 | Stable | Original API with standard responses |
+| v2 | Stable | Enhanced responses with metadata wrapper |
+
+Both versions are available simultaneously. v2 responses include:
+- Request ID for tracing
+- ISO 8601 timestamps with timezone
+- API version in response metadata
 
 ### Route Structure
 
@@ -161,6 +173,61 @@ Authorization: Bearer <jwt_token>
 ### No Content Response
 
 For `DELETE` operations, returns `204 No Content` with empty body.
+
+### v2 Response Format (Enhanced)
+
+API v2 wraps all responses in a standardized format with metadata:
+
+```json
+{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "full_name": "John Doe",
+    "is_premium": true,
+    "days_since_joined": 42
+  },
+  "meta": {
+    "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "timestamp": "2026-01-11T12:00:00Z",
+    "version": "v2"
+  }
+}
+```
+
+v2 endpoints also include additional computed fields (e.g., `is_premium`, `days_since_joined`).
+
+---
+
+## API Version Headers
+
+All API responses include version headers:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-API-Version` | API version used for this request | `v1` or `v2` |
+| `X-API-Latest-Version` | Latest available API version | `v2` |
+
+### Deprecated Version Headers (when applicable)
+
+When a version is deprecated, responses include:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `Deprecation` | RFC 8594 deprecation flag | `true` |
+| `Sunset` | RFC 8594 removal date | `Wed, 31 Dec 2025 23:59:59 GMT` |
+| `X-Deprecation-Notice` | Human-readable message | `API v1 is deprecated...` |
+| `Link` | Link to successor version | `</api/v2/>; rel="successor-version"` |
+
+### Version Selection
+
+Versions can be specified via:
+
+1. **URL Path** (recommended): `/api/v1/...` or `/api/v2/...`
+2. **Accept-Version Header**: `Accept-Version: v2`
+3. **X-API-Version Header**: `X-API-Version: v2`
+
+URL path takes precedence over headers.
 
 ---
 
@@ -1476,6 +1543,51 @@ Every response includes:
 | `X-Frame-Options` | `DENY` |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
 | `Content-Security-Policy` | `default-src 'self'` |
+
+---
+
+## Distributed Tracing (OpenTelemetry)
+
+When OpenTelemetry is enabled (`OTEL_ENABLED=true`), all requests are automatically traced.
+
+### Trace Context Propagation
+
+The API supports W3C Trace Context propagation. Include these headers to continue a trace from your frontend:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `traceparent` | W3C Trace Context | `00-abc123...-def456...-01` |
+| `tracestate` | Vendor-specific trace info | `vendor=value` |
+
+### Trace Correlation in Logs
+
+All log entries include trace context when available:
+
+```json
+{
+  "timestamp": "2026-01-11T12:00:00Z",
+  "level": "INFO",
+  "message": "Request completed",
+  "trace_id": "abc123def456789012345678901234",
+  "span_id": "1234567890abcdef",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Supported Exporters
+
+| Exporter | Configuration | Use Case |
+|----------|--------------|----------|
+| OTLP | `OTEL_EXPORTER_OTLP_ENDPOINT` | Jaeger, Grafana Tempo, etc. |
+| Zipkin | `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | Zipkin-compatible backends |
+| Console | `OTEL_EXPORTER=console` | Local development |
+
+### Auto-Instrumented Components
+
+- HTTP requests (FastAPI endpoints)
+- Database queries (SQLAlchemy)
+- Redis operations
+- External HTTP calls (httpx)
 
 ---
 
