@@ -18,10 +18,10 @@
 |--------|-------|
 | **Current Phase** | Phase 12: Advanced (v1.1) - In Progress |
 | **v1.0 Status** | ✅ Complete (Phases 1-11) |
-| **v1.1 Progress** | 5/8 features complete (API Versioning, WebSocket, Admin Dashboard, OpenTelemetry, Contact Form) |
-| **Overall Progress** | 120/123 tasks (98%) |
+| **v1.1 Progress** | 6/8 features complete (API Versioning, WebSocket, Admin Dashboard, OpenTelemetry, Enhanced Metrics, Contact Form) |
+| **Overall Progress** | 121/123 tasks (98%) |
 | **v1.0 Progress** | 115/115 tasks (100%) |
-| **Unit Tests** | 300+ passing |
+| **Unit Tests** | 350+ passing |
 | **Documentation** | [Live on GitHub Pages](https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/) |
 | **License** | MIT |
 
@@ -762,6 +762,90 @@ async def process_order(order_id: str):
 
 ---
 
+## Phase 12.5 Complete - Enhanced Prometheus Metrics
+
+### Files Created/Updated
+- `app/core/metrics.py` - Enhanced with system, auth, WebSocket, webhook metrics
+- `grafana/dashboards/api-overview.json` - API request metrics dashboard
+- `grafana/dashboards/database-redis.json` - Database and cache metrics dashboard
+- `grafana/dashboards/business-metrics.json` - Business, jobs, and AI metrics dashboard
+- `grafana/README.md` - Dashboard installation guide
+- `tests/unit/test_metrics.py` - 54 unit tests
+
+### New Metrics
+
+**System Metrics:**
+- `process_memory_bytes{type}` - Process memory (rss, vms, shared)
+- `process_cpu_seconds_total{mode}` - CPU time (user, system)
+- `process_open_fds` - Open file descriptors
+- `process_threads` - Thread count
+- `app_uptime_seconds` - Application uptime
+- `system_info` - Python version, platform info
+
+**Authentication Metrics:**
+- `auth_events_total{event,provider}` - Auth events (login, logout, signup, etc.)
+- `auth_failures_total{reason}` - Auth failures by reason
+- `token_operations_total{operation}` - Token ops (issued, verified, revoked)
+- `active_sessions` - Active session count
+
+**Rate Limiting Metrics:**
+- `rate_limit_hits_total{endpoint,client_type}` - Rate limit blocks
+
+**WebSocket Metrics:**
+- `websocket_connections{status}` - Active connections
+- `websocket_messages_total{direction,type}` - Message counts
+
+**Webhook Metrics:**
+- `webhook_events_total{provider,event_type,status}` - Webhook events
+- `webhook_processing_duration_seconds{provider}` - Processing latency
+
+### MetricsMiddleware
+ASGI middleware for automatic request metrics collection:
+```python
+from app.core.metrics import MetricsMiddleware
+app.add_middleware(MetricsMiddleware)
+```
+
+Features:
+- Automatic request counting and latency tracking
+- Path normalization (UUIDs/IDs → `{id}`)
+- Skips health/metrics endpoints
+
+### Grafana Dashboards
+Three pre-built dashboards in `grafana/dashboards/`:
+1. **API Overview** - Request rate, latency percentiles, error rates
+2. **Database & Redis** - Connection pools, query performance, cache stats
+3. **Business Metrics** - Users, subscriptions, background jobs, AI usage
+
+### Usage
+```python
+from app.core.metrics import (
+    record_auth_event,
+    record_auth_failure,
+    record_rate_limit_hit,
+    record_websocket_connect,
+    record_webhook_event,
+    update_system_metrics,
+)
+
+# Record login
+record_auth_event("login", provider="jwt")
+
+# Record auth failure
+record_auth_failure("expired_token")
+
+# Record rate limit hit
+record_rate_limit_hit("/api/v1/ai/chat", "user")
+
+# Record webhook
+record_webhook_event("stripe", "invoice.paid", "processed", duration=0.05)
+
+# Update system metrics (call periodically)
+update_system_metrics()
+```
+
+---
+
 ## Phase 12.6 Complete - Contact Form (Enhanced)
 
 ### Files Created
@@ -808,13 +892,13 @@ CONTACT_RATE_LIMIT="5/hour"             # Rate limit per IP
 - ✅ **12.2 WebSocket Support** - Real-time communication
 - ✅ **12.3 Admin Dashboard** - Stats, feature flags, impersonation, audit logs
 - ✅ **12.4 OpenTelemetry** - Distributed tracing with OTLP/Zipkin export, log correlation
+- ✅ **12.5 Enhanced Metrics** - System/auth/WebSocket/webhook metrics, Grafana dashboards, MetricsMiddleware
 - ✅ **12.6 Contact Form** - Public endpoint with spam protection
 
 ### Remaining Optional Features
 
-1. **12.5 Enhanced Metrics** - Grafana dashboards
-2. **12.7 Usage-Based Billing** - Track and report usage to Stripe
-3. **12.8 SQLite Fallback** - Offline development support
+1. **12.7 Usage-Based Billing** - Track and report usage to Stripe
+2. **12.8 SQLite Fallback** - Offline development support
 
 ### Note
 
