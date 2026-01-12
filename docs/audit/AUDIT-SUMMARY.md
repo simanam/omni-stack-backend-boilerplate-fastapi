@@ -1016,4 +1016,33 @@ All 123 tasks across 12 phases have been completed. The boilerplate is productio
 
 ---
 
+### 2026-01-11 - Documentation Updates for Phase 12
+
+**Summary:** Updated all user-facing documentation to include Phase 12.7 and 12.8 features
+
+**Completed:**
+- Updated documentation for Phase 12.7 (Usage-Based Billing) and Phase 12.8 (SQLite Fallback)
+- All 5 documentation files updated:
+  - API-REFERENCE.md - Added Usage Endpoints section (6 user + 6 admin endpoints)
+  - GETTING-STARTED.md - Added SQLite fallback quick start, usage tracking config
+  - ARCHITECTURE.md - Added Usage Tracking flow, Database Compatibility section
+  - MODULAR-GUIDE.md - Added Usage Tracking to optional components, removal instructions
+  - FRONTEND-INTEGRATION.md - Added Usage TypeScript types, React Query keys, UsageDashboard component
+- Created `docs-internal` branch for internal documentation
+- Removed `docs/` folder from `main` and `feature/phase-12-advanced` branches
+- Updated `.gitignore` to exclude internal `docs/` folder
+- Deployed updated documentation to GitHub Pages
+
+**Branch Structure:**
+- `main` - Stable release (no internal docs)
+- `feature/phase-12-advanced` - Advanced features branch (no internal docs)
+- `docs-internal` - Internal documentation only (audit, implementation, requirements)
+- `gh-pages` - Live documentation site
+
+**Issues Found:** None
+
+**Status:** All phases complete, documentation up to date
+
+---
+
 *Last Updated: 2026-01-11*

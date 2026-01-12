@@ -526,11 +526,42 @@ Each entry follows this format:
 
 ---
 
+#### 2026-01-11 - Documentation Updates
+
+**Updated:**
+- `documentation/API-REFERENCE.md` - Added Usage Endpoints section:
+  - User endpoints: summary, current-period, trends, daily, breakdown, metrics
+  - Admin endpoints: metrics, summary, trends, daily, top-users, breakdown
+- `documentation/GETTING-STARTED.md`:
+  - Added "Option B: Without Docker (SQLite Fallback)" quick start
+  - Added Usage Tracking configuration section
+- `documentation/ARCHITECTURE.md`:
+  - Added Usage Tracking flow diagram and metrics table
+  - Added Database Compatibility section for SQLite fallback
+- `documentation/MODULAR-GUIDE.md`:
+  - Added Usage Tracking to optional components table
+  - Added "Remove Usage Tracking" section with removal steps
+- `documentation/FRONTEND-INTEGRATION.md`:
+  - Added Usage TypeScript interfaces (UsageSummary, UsageTrend, etc.)
+  - Added Query Keys for TanStack Query
+  - Added UsageDashboard React component example
+
+**Changed:**
+- `.gitignore` - Added `docs/` exclusion for internal documentation
+- Separated internal docs (`docs/`) from user docs (`documentation/`)
+
+**Technical Notes:**
+- Internal documentation moved to separate `docs-internal` branch
+- User-facing documentation deployed to GitHub Pages
+- `docs/` folder not tracked in `main` or `feature/phase-12-advanced` branches
+
+---
+
 ## Release History
 
-### v1.0.0 (Planned)
+### v1.0.0 (Complete)
 
-**Target:** TBD
+**Released:** 2026-01-10
 
 **Features:**
 - Universal authentication (Supabase, Clerk, Custom OAuth)
@@ -544,13 +575,15 @@ Each entry follows this format:
 - Health checks + monitoring
 - Docker + deployment configs
 
+**Test Coverage:** 190+ tests passing
+
 ---
 
-### v1.1.0 (In Progress)
+### v1.1.0 (Complete)
 
-**Target:** After v1.0 stable
+**Released:** 2026-01-11
 
-**Completed Features:**
+**Features:**
 - ✅ API versioning (v1/v2) with deprecation headers
 - ✅ WebSocket support with Redis pub/sub
 - ✅ Admin dashboard endpoints (stats, audit logs)
@@ -560,9 +593,9 @@ Each entry follows this format:
 - ✅ Grafana dashboards (API, Database, Business)
 - ✅ Contact form with spam protection
 - ✅ Usage-based billing (API/AI/storage tracking, Stripe reporting, analytics)
-
-**Remaining Features:**
 - ✅ SQLite fallback (offline development)
+
+**Test Coverage:** 430+ tests passing
 
 ---
 
