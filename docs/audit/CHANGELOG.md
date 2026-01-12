@@ -436,6 +436,96 @@ Each entry follows this format:
 
 ---
 
+#### 2026-01-11 - Phase 12.8 SQLite Fallback Complete
+
+**Added:**
+- `app/models/compat.py` - Cross-database compatibility utilities:
+  - `JSONColumn()` - JSONB for PostgreSQL, JSON for SQLite
+  - `ArrayColumn()` - ARRAY for PostgreSQL, JSON for SQLite
+  - `JSONEncodedList`, `JSONEncodedDict` - TypeDecorators for JSON encoding
+  - `get_json_type()`, `get_array_type()` - Type getters for current database
+- `tests/unit/test_sqlite_fallback.py` - 33 unit tests for SQLite fallback
+
+**Changed:**
+- `app/core/config.py` - Added SQLite support:
+  - Default `DATABASE_URL` to SQLite for offline development
+  - `is_sqlite` computed property for database detection
+  - Updated `async_database_url` to handle `sqlite://` → `sqlite+aiosqlite://`
+- `app/core/db.py` - SQLite-compatible engine configuration:
+  - Added `StaticPool` for SQLite connections
+  - Added `check_same_thread=False` for aiosqlite
+- `app/core/cache.py` - Enhanced in-memory cache fallback:
+  - Full `InMemoryCache` class with TTL support
+  - Hash operations: `hset`, `hget`, `hgetall`, `hincrby`, `hdel`
+  - Set operations: `sadd`, `smembers`, `srem`, `scard`
+  - Key scanning: `keys()` with prefix matching
+  - `get_cache()` function for unified cache access
+- `.env.example` - Added SQLite and in-memory cache documentation
+
+**Technical Notes:**
+- SQLite uses `aiosqlite` driver for async compatibility
+- `StaticPool` required for SQLite to prevent connection issues
+- In-memory cache provides Redis-compatible API for offline development
+- Cross-database compatibility layer allows models to work with both PostgreSQL and SQLite
+- No schema changes required - uses JSON fallback for JSONB and ARRAY types
+
+---
+
+#### 2026-01-11 - Phase 12.7 Usage-Based Billing Complete
+
+**Added:**
+- `app/services/payments/usage.py` - Usage tracking service:
+  - `UsageMetric` enum: API_REQUESTS, AI_TOKENS, AI_REQUESTS, STORAGE_BYTES, etc.
+  - `UsageEvent`, `UsageSummary`, `UsageTrend` dataclasses
+  - `UsageTracker` class with Redis storage and in-memory fallback
+  - `StripeUsageReporter` for metered billing integration
+  - Convenience functions: `track_api_request()`, `track_ai_usage()`, `track_storage()`
+  - `get_usage_tracker()`, `get_stripe_usage_reporter()` singletons
+- `app/models/usage_record.py` - Usage record model:
+  - `UsageRecord` SQLModel for PostgreSQL persistence
+  - `UsageSummaryView`, `UsageAnalytics`, `UserUsageOverview` view models
+  - Indexes for user_id, metric, period lookups
+- `app/api/v1/admin/usage.py` - Admin usage endpoints:
+  - `GET /usage/metrics` - List available metrics
+  - `GET /usage/summary/{user_id}` - User's usage summary
+  - `GET /usage/trends/{user_id}` - Usage trends with growth rate
+  - `GET /usage/daily/{user_id}` - Daily usage breakdown
+  - `GET /usage/top-users` - Top users by metric
+  - `GET /usage/breakdown/{user_id}` - Usage by category
+- `app/api/v1/app/usage.py` - User usage endpoints:
+  - `GET /usage/summary` - Own usage summary
+  - `GET /usage/current-period` - Current billing period usage
+  - `GET /usage/trends` - Usage trends
+  - `GET /usage/daily` - Daily usage
+  - `GET /usage/breakdown` - Usage by category
+  - `GET /usage/metrics` - List available metrics
+- `tests/unit/test_usage.py` - 32 unit tests
+
+**Changed:**
+- `app/core/middleware.py` - Added `UsageTrackingMiddleware`:
+  - Automatic API request tracking for authenticated users
+  - Skips health and public endpoints
+  - Extracts user_id from JWT token
+- `app/api/v1/app/ai.py` - Added AI usage tracking:
+  - `_track_ai_usage()` helper function
+  - Tracks prompt tokens, completion tokens, model used
+- `app/api/v1/router.py` - Added usage routes for admin and app
+- `app/services/payments/__init__.py` - Exported usage tracking functions
+- `app/core/config.py` - Added usage tracking configuration:
+  - `USAGE_TRACKING_ENABLED`, `USAGE_TTL_DAYS`
+  - `USAGE_STRIPE_SYNC_ENABLED`, `USAGE_STRIPE_SYNC_INTERVAL`
+- `.env.example` - Added usage tracking environment variables
+
+**Technical Notes:**
+- Redis-based hot storage with `usage:{user_id}:{metric}:{period}` key pattern
+- In-memory fallback dictionary when Redis unavailable
+- Category breakdown stored in hash: endpoint for API, model for AI, file type for storage
+- Stripe SDK v14 compatibility: uses raw API for legacy usage records
+- Trend analysis: calculates growth rate, daily average, peak detection
+- TTL: usage data expires after configurable days (default: 90)
+
+---
+
 ## Release History
 
 ### v1.0.0 (Planned)
@@ -469,10 +559,10 @@ Each entry follows this format:
 - ✅ Enhanced Prometheus metrics (system, auth, WebSocket, webhook)
 - ✅ Grafana dashboards (API, Database, Business)
 - ✅ Contact form with spam protection
+- ✅ Usage-based billing (API/AI/storage tracking, Stripe reporting, analytics)
 
 **Remaining Features:**
-- 🔴 Usage-based billing (Stripe usage reports)
-- 🔴 SQLite fallback (offline development)
+- ✅ SQLite fallback (offline development)
 
 ---
 

@@ -10,11 +10,11 @@
 
 | Metric | Value |
 |--------|-------|
-| **Current Phase** | Phase 12: Advanced Features (v1.1) |
-| **Overall Progress** | 98% (121/123 tasks) |
+| **Current Phase** | Phase 12: Advanced Features (v1.1) - Complete |
+| **Overall Progress** | 100% (123/123 tasks) |
 | **v1.0 Progress** | 100% (115/115 tasks) |
-| **v1.1 Progress** | 6/8 features complete |
-| **Unit Tests** | 370+ passing |
+| **v1.1 Progress** | 8/8 features complete |
+| **Unit Tests** | 430+ passing |
 | **Open Issues** | 0 |
 | **Last Updated** | 2026-01-11 |
 
@@ -191,23 +191,29 @@
 | ✅ grafana/dashboards/business-metrics.json | 2026-01-11 | Grafana business metrics dashboard |
 | ✅ grafana/README.md | 2026-01-11 | Dashboard installation guide |
 | ✅ tests/unit/test_metrics.py | 2026-01-11 | 54 metrics tests |
+| ✅ app/services/payments/usage.py | 2026-01-11 | Usage tracking service (Phase 12.7) |
+| ✅ app/models/usage_record.py | 2026-01-11 | Usage record model for persistence |
+| ✅ app/api/v1/admin/usage.py | 2026-01-11 | Admin usage analytics endpoints |
+| ✅ app/api/v1/app/usage.py | 2026-01-11 | User usage endpoints |
+| ✅ tests/unit/test_usage.py | 2026-01-11 | 32 usage tracking tests |
+| ✅ app/models/compat.py | 2026-01-11 | Cross-database compatibility (Phase 12.8) |
+| ✅ app/core/db.py (updated) | 2026-01-11 | SQLite connection handling |
+| ✅ app/core/cache.py (enhanced) | 2026-01-11 | In-memory cache fallback |
+| ✅ tests/unit/test_sqlite_fallback.py | 2026-01-11 | 33 SQLite fallback tests |
 
 ---
 
 ## What's In Progress 🟡
 
-*Nothing currently in progress*
+*Nothing currently in progress - All phases complete!*
 
 ---
 
 ## What's Next 📋
 
-### Immediate Next Steps (Phase 12: Advanced Features - Remaining)
+### All Phases Complete!
 
-| Priority | Task | File(s) | Est. Effort |
-|----------|------|---------|-------------|
-| 1 | Usage-Based Billing | `app/services/payments/usage.py` | Medium |
-| 2 | SQLite Fallback | `app/core/db.py` | Small |
+All 123 tasks across 12 phases have been completed. The boilerplate is production-ready.
 
 ### Phase Readiness
 
@@ -224,7 +230,7 @@
 | Phase 9 | ✅ Complete | ✅ Done |
 | Phase 10 | ✅ Complete | ✅ Done |
 | Phase 11 | ✅ Complete | ✅ Done |
-| Phase 12 | 🟡 6/8 Complete | 🟡 In Progress |
+| Phase 12 | ✅ 8/8 Complete | ✅ Done |
 
 ---
 
@@ -455,10 +461,10 @@
 
 ---
 
-### Phase 12: Advanced Features 🟡
+### Phase 12: Advanced Features ✅
 
-**Status:** In Progress (v1.1)
-**Progress:** 6/8 tasks (75%)
+**Status:** Complete (v1.1)
+**Progress:** 8/8 tasks (100%)
 
 | Task | Status | Completed | Notes |
 |------|--------|-----------|-------|
@@ -469,8 +475,8 @@
 | OpenTelemetry | ✅ | 2026-01-11 | Distributed tracing, auto-instrumentation (38 tests) |
 | Enhanced Metrics | ✅ | 2026-01-11 | System/auth/WS/webhook metrics, Grafana dashboards (54 tests) |
 | Contact Form | ✅ | 2026-01-11 | Spam protection, webhooks (32 tests) |
-| Usage-Based Billing | 🔴 | - | Track API/AI/storage usage |
-| SQLite Fallback | 🔴 | - | Offline development |
+| Usage-Based Billing | ✅ | 2026-01-11 | API/AI/storage tracking, Stripe reporting (32 tests) |
+| SQLite Fallback | ✅ | 2026-01-11 | Offline development (33 tests) |
 
 ---
 
@@ -786,6 +792,94 @@
 
 ---
 
+### 2026-01-11 - Phase 12.7 Usage-Based Billing Complete
+
+**Summary:** Track API/AI/storage usage for metered billing and analytics
+
+**Completed:**
+- Phase 12.7 Usage-Based Billing complete:
+  - UsageTracker service with Redis hot storage
+  - In-memory fallback when Redis unavailable
+  - UsageMetric enum: api_requests, ai_tokens, ai_requests, storage_bytes, file_uploads, file_downloads, websocket_messages, background_jobs, email_sent
+  - UsageSummary, UsageTrend dataclasses for analytics
+  - StripeUsageReporter for metered billing integration
+  - Automatic API request tracking via UsageTrackingMiddleware
+  - AI token tracking integrated in AI endpoints
+  - Convenience functions: track_api_request, track_ai_usage, track_storage
+  - 32 unit tests for usage tracking
+- Admin usage endpoints:
+  - GET /usage/metrics - List available metrics
+  - GET /usage/summary/{user_id} - User's usage summary
+  - GET /usage/trends/{user_id} - Usage trends with growth rate
+  - GET /usage/daily/{user_id} - Daily usage breakdown
+  - GET /usage/top-users - Top users by metric
+  - GET /usage/breakdown/{user_id} - Usage by category
+- User usage endpoints:
+  - GET /usage/summary - Own usage summary
+  - GET /usage/current-period - Current billing period
+  - GET /usage/trends - Usage trends
+  - GET /usage/daily - Daily usage
+  - GET /usage/breakdown - Category breakdown
+  - GET /usage/metrics - Available metrics
+
+**Files Created:**
+- `app/services/payments/usage.py` - UsageTracker, StripeUsageReporter, convenience functions
+- `app/models/usage_record.py` - UsageRecord model for PostgreSQL persistence
+- `app/api/v1/admin/usage.py` - Admin usage analytics endpoints
+- `app/api/v1/app/usage.py` - User usage endpoints
+- `tests/unit/test_usage.py` - 32 usage tracking tests
+
+**Files Modified:**
+- `app/core/middleware.py` - Added UsageTrackingMiddleware
+- `app/api/v1/app/ai.py` - AI token tracking
+- `app/api/v1/router.py` - Usage routes
+- `app/core/config.py` - Usage tracking settings
+- `.env.example` - Usage environment variables
+
+**Test Summary:**
+- Phase 12 total: 248 tests (38+23+31+38+54+32+32)
+- All tests passing (1 skipped - Stripe SDK v14 compatibility)
+
+**Issues Found:** Stripe SDK v14 removed legacy usage record API - added raw API fallback
+
+**Next Focus:** All phases complete!
+
+---
+
+### 2026-01-11 - Phase 12.8 SQLite Fallback Complete
+
+**Summary:** Enable offline development without Docker/PostgreSQL/Redis
+
+**Completed:**
+- Phase 12.8 SQLite Fallback complete:
+  - SQLite detection in config with `is_sqlite` computed property
+  - Default `DATABASE_URL` to SQLite for quick offline startup
+  - `StaticPool` and `check_same_thread=False` for aiosqlite
+  - Full `InMemoryCache` class with TTL, hash, and set operations
+  - Cross-database compatibility: `JSONColumn()`, `ArrayColumn()`
+  - `JSONEncodedList`, `JSONEncodedDict` TypeDecorators
+  - 33 unit tests for SQLite fallback
+
+**Files Created:**
+- `app/models/compat.py` - Cross-database compatibility utilities
+- `tests/unit/test_sqlite_fallback.py` - 33 SQLite fallback tests
+
+**Files Modified:**
+- `app/core/config.py` - SQLite detection, default URL
+- `app/core/db.py` - SQLite-compatible engine options
+- `app/core/cache.py` - Full InMemoryCache implementation
+- `.env.example` - SQLite documentation
+
+**Test Summary:**
+- Phase 12 total: 281 tests (38+23+31+38+54+32+32+33)
+- All tests passing
+
+**Issues Found:** Fixed type hint error with `from __future__ import annotations`
+
+**All Phases Complete!** v1.0 and v1.1 are production-ready.
+
+---
+
 ### 2026-01-11 - Phase 12.5 Enhanced Metrics Complete
 
 **Summary:** Comprehensive Prometheus metrics with Grafana dashboards
@@ -885,7 +979,7 @@
 
 ### v1.1 Release Checklist
 
-- [ ] Phase 12 complete (6/8 done)
+- [x] Phase 12 complete (8/8 done)
 - [x] WebSocket functionality tested (23 tests)
 - [x] API versioning verified (38 tests)
 - [x] Feature flags working (admin CRUD)
@@ -893,8 +987,8 @@
 - [x] Enhanced Prometheus metrics (54 tests)
 - [x] Grafana dashboards (3 dashboards)
 - [x] Contact form with spam protection (32 tests)
-- [ ] Usage-based billing
-- [ ] SQLite fallback
+- [x] Usage-based billing (32 tests)
+- [x] SQLite fallback (33 tests)
 
 ---
 
