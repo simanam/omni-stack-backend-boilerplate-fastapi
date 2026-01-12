@@ -38,6 +38,8 @@ Complete guide to set up and run OmniStack Backend.
 
 ## Quick Start (60 Seconds)
 
+### Option A: With Docker (Recommended)
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/your-org/backend-boilerplate-fastapi.git
@@ -59,6 +61,27 @@ cp .env.example .env
 make up
 
 # 7. Run the API server
+make dev
+```
+
+### Option B: Without Docker (SQLite Fallback)
+
+No Docker? No problem! Run with SQLite and in-memory cache:
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/your-org/backend-boilerplate-fastapi.git
+cd backend-boilerplate-fastapi
+make venv && source .venv/bin/activate && make install
+
+# 2. Create minimal .env (SQLite is the default if DATABASE_URL is not set)
+cat > .env << 'EOF'
+SECRET_KEY="your-secret-key-at-least-32-characters-long"
+DATABASE_URL="sqlite+aiosqlite:///./dev.db"
+# Leave REDIS_URL empty for in-memory cache fallback
+EOF
+
+# 3. Run the API server
 make dev
 ```
 
@@ -186,6 +209,14 @@ CONTACT_SEND_CONFIRMATION="true"       # Send confirmation to sender
 CONTACT_WEBHOOK_URL=""                 # CRM webhook URL
 CONTACT_RATE_LIMIT="5/hour"            # Rate limit per IP
 ADMIN_EMAIL=""                         # Admin notification email
+
+# ============================================
+# USAGE TRACKING (Optional)
+# ============================================
+USAGE_TRACKING_ENABLED="true"          # Enable/disable usage tracking
+USAGE_TTL_DAYS="90"                    # Days to keep usage data
+USAGE_STRIPE_SYNC_ENABLED="false"      # Enable Stripe metered billing sync
+USAGE_STRIPE_SYNC_INTERVAL="3600"      # Sync interval in seconds
 
 # ============================================
 # CORS

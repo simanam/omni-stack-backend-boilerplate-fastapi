@@ -355,6 +355,92 @@ interface Invoice {
 }
 
 // ============================================
+// Usage Types
+// ============================================
+
+type UsageMetric =
+  | 'api_requests'
+  | 'ai_tokens'
+  | 'ai_requests'
+  | 'storage_bytes'
+  | 'file_uploads'
+  | 'file_downloads'
+  | 'websocket_messages'
+  | 'background_jobs'
+  | 'email_sent';
+
+interface UsageMetricInfo {
+  current_period: number;
+  previous_period: number;
+  growth_rate: number;
+  daily_average: number;
+}
+
+interface UsageSummaryResponse {
+  metrics: Record<UsageMetric, UsageMetricInfo>;
+  period: {
+    start: string;
+    end: string;
+  };
+}
+
+interface UsageCurrentPeriodResponse {
+  api_requests: number;
+  ai_tokens: number;
+  ai_requests: number;
+  storage_bytes: number;
+  file_uploads: number;
+  file_downloads: number;
+  websocket_messages: number;
+  background_jobs: number;
+  email_sent: number;
+  period: {
+    start: string;
+    end: string;
+  };
+}
+
+interface UsageTrendResponse {
+  metric: UsageMetric;
+  current_period: number;
+  previous_period: number;
+  growth_rate: number;
+  daily_average: number;
+  peak_day: string;
+  peak_value: number;
+  trend: 'increasing' | 'decreasing' | 'stable';
+}
+
+interface UsageDailyDataPoint {
+  date: string;
+  value: number;
+}
+
+interface UsageDailyResponse {
+  metric: UsageMetric;
+  data: UsageDailyDataPoint[];
+  total: number;
+  average: number;
+}
+
+interface UsageBreakdownResponse {
+  metric: UsageMetric;
+  breakdown: Record<string, number>;
+  total: number;
+}
+
+interface UsageMetricDefinition {
+  key: UsageMetric;
+  name: string;
+  description: string;
+  unit: string;
+}
+
+interface UsageMetricsListResponse {
+  metrics: UsageMetricDefinition[];
+}
+
+// ============================================
 // Health Types
 // ============================================
 
@@ -578,6 +664,14 @@ export const queryKeys = {
   },
   ai: {
     status: ['ai', 'status'] as const,
+  },
+  usage: {
+    summary: ['usage', 'summary'] as const,
+    currentPeriod: ['usage', 'current-period'] as const,
+    trends: (metric: string) => ['usage', 'trends', metric] as const,
+    daily: (metric: string, days: number) => ['usage', 'daily', metric, days] as const,
+    breakdown: (metric: string) => ['usage', 'breakdown', metric] as const,
+    metrics: ['usage', 'metrics'] as const,
   },
 };
 ```
@@ -1663,6 +1757,99 @@ export function BillingSection() {
       )}
     </div>
   );
+}
+```
+
+### Usage Dashboard Component
+
+```tsx
+// components/UsageDashboard.tsx
+
+import { useQuery } from '@tanstack/react-query';
+
+export function UsageDashboard() {
+  const { data: currentPeriod, isLoading: loadingCurrent } = useQuery({
+    queryKey: queryKeys.usage.currentPeriod,
+    queryFn: () => apiClient.get<UsageCurrentPeriodResponse>('/app/usage/current-period'),
+  });
+
+  const { data: aiTrends, isLoading: loadingTrends } = useQuery({
+    queryKey: queryKeys.usage.trends('ai_tokens'),
+    queryFn: () => apiClient.get<UsageTrendResponse>('/app/usage/trends', { metric: 'ai_tokens' }),
+  });
+
+  if (loadingCurrent || loadingTrends) return <div>Loading...</div>;
+
+  return (
+    <div className="usage-dashboard">
+      <h2>Usage This Period</h2>
+
+      <div className="metrics-grid">
+        <MetricCard
+          label="API Requests"
+          value={currentPeriod?.api_requests ?? 0}
+          unit="requests"
+        />
+        <MetricCard
+          label="AI Tokens"
+          value={currentPeriod?.ai_tokens ?? 0}
+          unit="tokens"
+          trend={aiTrends?.trend}
+          growthRate={aiTrends?.growth_rate}
+        />
+        <MetricCard
+          label="Storage"
+          value={formatBytes(currentPeriod?.storage_bytes ?? 0)}
+          unit=""
+        />
+        <MetricCard
+          label="Files Uploaded"
+          value={currentPeriod?.file_uploads ?? 0}
+          unit="files"
+        />
+      </div>
+
+      <div className="period-info">
+        <small>
+          Period: {new Date(currentPeriod?.period.start ?? '').toLocaleDateString()} -{' '}
+          {new Date(currentPeriod?.period.end ?? '').toLocaleDateString()}
+        </small>
+      </div>
+    </div>
+  );
+}
+
+interface MetricCardProps {
+  label: string;
+  value: number | string;
+  unit: string;
+  trend?: 'increasing' | 'decreasing' | 'stable';
+  growthRate?: number;
+}
+
+function MetricCard({ label, value, unit, trend, growthRate }: MetricCardProps) {
+  return (
+    <div className="metric-card">
+      <h3>{label}</h3>
+      <p className="value">
+        {typeof value === 'number' ? value.toLocaleString() : value} {unit}
+      </p>
+      {trend && growthRate !== undefined && (
+        <p className={`trend ${trend}`}>
+          {trend === 'increasing' ? '↑' : trend === 'decreasing' ? '↓' : '→'}
+          {Math.abs(growthRate).toFixed(1)}% vs last period
+        </p>
+      )}
+    </div>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 ```
 

@@ -129,10 +129,14 @@ app/
 │   │   ├── cloudinary_provider.py
 │   │   ├── local_provider.py
 │   │   └── factory.py
-│   └── payments/              # Payment providers
-│       ├── stripe_service.py
-│       ├── apple_iap_service.py
-│       └── google_iap_service.py
+│   ├── payments/              # Payment providers
+│   │   ├── stripe_service.py
+│   │   ├── apple_iap_service.py
+│   │   ├── google_iap_service.py
+│   │   └── usage.py           # Usage tracking service
+│   └── websocket/             # WebSocket manager
+│       ├── manager.py
+│       └── events.py
 │
 ├── jobs/                      # Background Tasks
 │   ├── __init__.py            # Enqueue utilities
@@ -865,6 +869,111 @@ Pre-built dashboards are available in `grafana/dashboards/`:
 | `business-metrics.json` | Users, subscriptions, background jobs, AI usage |
 
 See `grafana/README.md` for installation instructions.
+
+### Usage Tracking
+
+The usage tracking system monitors API calls, AI tokens, storage, and other metrics for billing and analytics.
+
+```
+Usage Tracking Flow:
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Request   │───▶│  Middleware │───▶│   Redis     │
+│             │    │  (track)    │    │  (counters) │
+└─────────────┘    └─────────────┘    └─────────────┘
+                          │
+                          ▼
+                   ┌─────────────┐
+                   │  PostgreSQL │
+                   │  (persist)  │
+                   └─────────────┘
+```
+
+**Tracked Metrics:**
+
+| Metric | Description | Tracked By |
+|--------|-------------|------------|
+| `api_requests` | API request count | UsageTrackingMiddleware |
+| `ai_tokens` | AI/LLM tokens consumed | AI endpoints |
+| `ai_requests` | AI completion requests | AI endpoints |
+| `storage_bytes` | Storage space used | File uploads |
+| `file_uploads` | Files uploaded | File endpoints |
+| `file_downloads` | Files downloaded | File endpoints |
+| `websocket_messages` | WebSocket messages | WebSocket manager |
+| `background_jobs` | Jobs executed | Job worker |
+| `email_sent` | Emails sent | Email service |
+
+**Usage Example:**
+
+```python
+from app.services.payments.usage import get_usage_tracker, track_ai_usage
+
+# Get tracker instance
+tracker = get_usage_tracker()
+
+# Track custom metric
+await tracker.track("custom_metric", user_id, amount=1)
+
+# Track AI usage (called automatically by AI endpoints)
+await track_ai_usage(
+    user_id="user_123",
+    model="gpt-4o",
+    prompt_tokens=100,
+    completion_tokens=200,
+)
+
+# Get usage summary
+summary = await tracker.get_usage_summary(user_id, period_start, period_end)
+```
+
+---
+
+## Database Compatibility
+
+### SQLite Fallback
+
+The application supports SQLite for offline development without Docker:
+
+```python
+# app/models/compat.py - Cross-database column helpers
+
+from app.models.compat import JSONColumn, ArrayColumn
+
+class MyModel(BaseModel, table=True):
+    # Uses JSONB on PostgreSQL, JSON on SQLite
+    metadata: dict = Field(sa_column=JSONColumn())
+
+    # Uses ARRAY on PostgreSQL, JSON on SQLite
+    tags: list[str] = Field(sa_column=ArrayColumn(String))
+```
+
+**Database Detection:**
+
+```python
+from app.core.config import settings
+
+if settings.is_sqlite:
+    # SQLite-specific logic
+    ...
+else:
+    # PostgreSQL-specific logic
+    ...
+```
+
+**In-Memory Cache Fallback:**
+
+When Redis is unavailable, the cache automatically falls back to in-memory storage:
+
+```python
+from app.core.cache import get_cache
+
+cache = get_cache()  # Returns Redis or InMemoryCache
+
+# Same API for both
+await cache.set("key", "value", ttl=300)
+value = await cache.get("key")
+```
+
+> **Note:** SQLite and in-memory cache are for development only. Use PostgreSQL and Redis in production.
 
 ---
 

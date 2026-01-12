@@ -20,6 +20,7 @@ from app.models.base import BaseModel, SoftDeleteMixin  # noqa: F401
 
 # Add new model imports here as they are created:
 from app.models.user import User  # noqa: F401
+
 # from app.models.project import Project  # noqa: F401
 
 # this is the Alembic Config object, which provides

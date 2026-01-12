@@ -9,8 +9,9 @@ from app.api.v1.admin import dashboard as admin_dashboard
 from app.api.v1.admin import feature_flags as admin_feature_flags
 from app.api.v1.admin import impersonate as admin_impersonate
 from app.api.v1.admin import jobs as admin_jobs
+from app.api.v1.admin import usage as admin_usage
 from app.api.v1.admin import users as admin_users
-from app.api.v1.app import ai, billing, files, projects, users, ws
+from app.api.v1.app import ai, billing, files, projects, usage, users, ws
 from app.api.v1.public import contact, health, metrics, webhooks
 
 # Public routes (no auth required)
@@ -27,6 +28,7 @@ app_router.include_router(projects.router, prefix="/projects")
 app_router.include_router(files.router, prefix="/files")
 app_router.include_router(ai.router, prefix="/ai")
 app_router.include_router(billing.router, prefix="/billing")
+app_router.include_router(usage.router)  # Usage at /api/v1/app/usage
 app_router.include_router(ws.router)  # WebSocket at /api/v1/app/ws
 
 # Admin routes (auth + admin role required)
@@ -36,6 +38,7 @@ admin_router.include_router(admin_jobs.router, prefix="/jobs")
 admin_router.include_router(admin_dashboard.router, prefix="/dashboard")
 admin_router.include_router(admin_feature_flags.router, prefix="/feature-flags")
 admin_router.include_router(admin_impersonate.router, prefix="/impersonate")
+admin_router.include_router(admin_usage.router)  # Usage at /api/v1/admin/usage
 
 # Aggregate all v1 routes
 api_router = APIRouter(prefix="/api/v1")

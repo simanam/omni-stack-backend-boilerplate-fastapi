@@ -20,6 +20,7 @@ Complete API documentation for OmniStack Backend.
    - [Files](#file-endpoints)
    - [AI](#ai-endpoints)
    - [Billing](#billing-endpoints)
+   - [Usage](#usage-endpoints)
    - [WebSocket](#websocket-endpoints)
    - [Admin](#admin-endpoints)
    - [Webhooks](#webhook-endpoints)
@@ -1069,6 +1070,236 @@ Authorization: Bearer <token>
 
 ---
 
+### Usage Endpoints
+
+Track and monitor API usage, AI tokens, storage, and other metrics for usage-based billing.
+
+#### Get Usage Summary
+
+```http
+GET /api/v1/app/usage/summary
+Authorization: Bearer <token>
+```
+
+**Query Parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `metric` | string | No | Filter by specific metric (default: all) |
+
+**Response (200)**
+```json
+{
+  "metrics": {
+    "api_requests": {
+      "current_period": 1250,
+      "previous_period": 980,
+      "growth_rate": 27.55,
+      "daily_average": 41.67
+    },
+    "ai_tokens": {
+      "current_period": 45000,
+      "previous_period": 32000,
+      "growth_rate": 40.63,
+      "daily_average": 1500
+    },
+    "storage_bytes": {
+      "current_period": 104857600,
+      "previous_period": 52428800,
+      "growth_rate": 100.0,
+      "daily_average": 3495253
+    }
+  },
+  "period": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-01-31T23:59:59Z"
+  }
+}
+```
+
+#### Get Current Period Usage
+
+```http
+GET /api/v1/app/usage/current-period
+Authorization: Bearer <token>
+```
+
+**Response (200)**
+```json
+{
+  "api_requests": 1250,
+  "ai_tokens": 45000,
+  "ai_requests": 150,
+  "storage_bytes": 104857600,
+  "file_uploads": 25,
+  "file_downloads": 89,
+  "websocket_messages": 340,
+  "background_jobs": 12,
+  "email_sent": 8,
+  "period": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-01-31T23:59:59Z"
+  }
+}
+```
+
+#### Get Usage Trends
+
+```http
+GET /api/v1/app/usage/trends?metric=ai_tokens
+Authorization: Bearer <token>
+```
+
+**Query Parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `metric` | string | Yes | Metric to analyze |
+| `days` | integer | No | Number of days (default: 30) |
+
+**Response (200)**
+```json
+{
+  "metric": "ai_tokens",
+  "current_period": 45000,
+  "previous_period": 32000,
+  "growth_rate": 40.63,
+  "daily_average": 1500,
+  "peak_day": "2026-01-15",
+  "peak_value": 3200,
+  "trend": "increasing"
+}
+```
+
+#### Get Daily Usage Breakdown
+
+```http
+GET /api/v1/app/usage/daily?metric=api_requests&days=7
+Authorization: Bearer <token>
+```
+
+**Query Parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `metric` | string | Yes | Metric to retrieve |
+| `days` | integer | No | Number of days (default: 30, max: 90) |
+
+**Response (200)**
+```json
+{
+  "metric": "api_requests",
+  "data": [
+    { "date": "2026-01-05", "value": 42 },
+    { "date": "2026-01-06", "value": 38 },
+    { "date": "2026-01-07", "value": 55 },
+    { "date": "2026-01-08", "value": 61 },
+    { "date": "2026-01-09", "value": 47 },
+    { "date": "2026-01-10", "value": 52 },
+    { "date": "2026-01-11", "value": 49 }
+  ],
+  "total": 344,
+  "average": 49.14
+}
+```
+
+#### Get Usage Breakdown by Category
+
+```http
+GET /api/v1/app/usage/breakdown?metric=ai_tokens
+Authorization: Bearer <token>
+```
+
+**Query Parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `metric` | string | Yes | Metric to break down |
+
+**Response (200)**
+```json
+{
+  "metric": "ai_tokens",
+  "breakdown": {
+    "gpt-4o": 25000,
+    "gpt-4o-mini": 15000,
+    "claude-sonnet-4-5": 5000
+  },
+  "total": 45000
+}
+```
+
+#### List Available Metrics
+
+```http
+GET /api/v1/app/usage/metrics
+Authorization: Bearer <token>
+```
+
+**Response (200)**
+```json
+{
+  "metrics": [
+    {
+      "key": "api_requests",
+      "name": "API Requests",
+      "description": "Total API requests made",
+      "unit": "requests"
+    },
+    {
+      "key": "ai_tokens",
+      "name": "AI Tokens",
+      "description": "AI/LLM tokens consumed",
+      "unit": "tokens"
+    },
+    {
+      "key": "ai_requests",
+      "name": "AI Requests",
+      "description": "Number of AI completion requests",
+      "unit": "requests"
+    },
+    {
+      "key": "storage_bytes",
+      "name": "Storage",
+      "description": "Storage space used",
+      "unit": "bytes"
+    },
+    {
+      "key": "file_uploads",
+      "name": "File Uploads",
+      "description": "Number of files uploaded",
+      "unit": "files"
+    },
+    {
+      "key": "file_downloads",
+      "name": "File Downloads",
+      "description": "Number of files downloaded",
+      "unit": "files"
+    },
+    {
+      "key": "websocket_messages",
+      "name": "WebSocket Messages",
+      "description": "WebSocket messages sent/received",
+      "unit": "messages"
+    },
+    {
+      "key": "background_jobs",
+      "name": "Background Jobs",
+      "description": "Background jobs executed",
+      "unit": "jobs"
+    },
+    {
+      "key": "email_sent",
+      "name": "Emails Sent",
+      "description": "Emails sent",
+      "unit": "emails"
+    }
+  ]
+}
+```
+
+---
+
 ### WebSocket Endpoints
 
 Real-time communication via WebSocket connections.
@@ -1400,6 +1631,43 @@ Content-Type: application/json
 ```http
 POST /api/v1/admin/impersonate/stop
 Authorization: Bearer <impersonation_token>
+```
+
+#### Admin Usage Analytics
+
+```http
+GET /api/v1/admin/usage/summary/{user_id}
+Authorization: Bearer <admin_token>
+```
+
+**Response (200)**: Usage summary for specified user (same format as user endpoint)
+
+```http
+GET /api/v1/admin/usage/top-users?metric=ai_tokens&limit=10
+Authorization: Bearer <admin_token>
+```
+
+**Query Parameters**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `metric` | string | `api_requests` | Metric to rank by |
+| `limit` | integer | 10 | Number of top users (max: 100) |
+
+**Response (200)**
+```json
+{
+  "metric": "ai_tokens",
+  "users": [
+    { "user_id": "user_123", "email": "heavy@example.com", "value": 125000 },
+    { "user_id": "user_456", "email": "moderate@example.com", "value": 45000 },
+    { "user_id": "user_789", "email": "light@example.com", "value": 12000 }
+  ],
+  "period": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-01-31T23:59:59Z"
+  }
+}
 ```
 
 #### Get Audit Logs

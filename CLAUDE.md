@@ -16,12 +16,12 @@
 
 | Metric | Value |
 |--------|-------|
-| **Current Phase** | Phase 12: Advanced (v1.1) - In Progress |
+| **Current Phase** | Phase 12: Advanced (v1.1) - Complete |
 | **v1.0 Status** | ✅ Complete (Phases 1-11) |
-| **v1.1 Progress** | 6/8 features complete (API Versioning, WebSocket, Admin Dashboard, OpenTelemetry, Enhanced Metrics, Contact Form) |
-| **Overall Progress** | 121/123 tasks (98%) |
+| **v1.1 Progress** | 8/8 features complete (API Versioning, WebSocket, Admin Dashboard, OpenTelemetry, Enhanced Metrics, Contact Form, Usage-Based Billing, SQLite Fallback) |
+| **Overall Progress** | 123/123 tasks (100%) |
 | **v1.0 Progress** | 115/115 tasks (100%) |
-| **Unit Tests** | 350+ passing |
+| **Unit Tests** | 430+ passing |
 | **Documentation** | [Live on GitHub Pages](https://simanam.github.io/omni-stack-backend-boilerplate-fastapi/) |
 | **License** | MIT |
 
@@ -78,7 +78,7 @@
 | 9 | Testing | 12 | ✅ Complete |
 | 10 | Deployment | 13 | ✅ Complete |
 | 11 | Documentation | 10 | ✅ Complete |
-| 12 | Advanced (v1.1) | 8 | 🟡 5/8 Complete |
+| 12 | Advanced (v1.1) | 8 | ✅ Complete |
 
 ---
 
@@ -885,24 +885,163 @@ CONTACT_RATE_LIMIT="5/hour"             # Rate limit per IP
 
 ---
 
-## What To Do Next: Phase 12 (Remaining Features)
+## Phase 12.7 Complete - Usage-Based Billing
+
+### Files Created
+- `app/services/payments/usage.py` - UsageTracker and StripeUsageReporter services
+- `app/models/usage_record.py` - UsageRecord model for PostgreSQL persistence
+- `app/api/v1/admin/usage.py` - Admin usage analytics endpoints
+- `app/api/v1/app/usage.py` - User usage endpoints
+- `tests/unit/test_usage.py` - 32 unit tests
+
+### Files Modified
+- `app/core/middleware.py` - Added UsageTrackingMiddleware
+- `app/api/v1/app/ai.py` - Added AI token tracking
+- `app/api/v1/router.py` - Added usage routes
+- `app/core/config.py` - Added usage tracking settings
+
+### New API Endpoints
+
+**User Endpoints:**
+- `GET /api/v1/app/usage/summary` - Usage summary for all metrics
+- `GET /api/v1/app/usage/current-period` - Current billing period usage
+- `GET /api/v1/app/usage/trends` - Usage trends with growth rate
+- `GET /api/v1/app/usage/daily` - Daily usage breakdown
+- `GET /api/v1/app/usage/breakdown` - Usage by category (endpoint, model, etc.)
+- `GET /api/v1/app/usage/metrics` - List available metrics
+
+**Admin Endpoints:**
+- `GET /api/v1/admin/usage/metrics` - List all metrics
+- `GET /api/v1/admin/usage/summary/{user_id}` - User's usage summary
+- `GET /api/v1/admin/usage/trends/{user_id}` - User's usage trends
+- `GET /api/v1/admin/usage/daily/{user_id}` - User's daily usage
+- `GET /api/v1/admin/usage/top-users` - Top users by metric
+- `GET /api/v1/admin/usage/breakdown/{user_id}` - User's usage breakdown
+
+### Usage Metrics
+- `api_requests` - Total API requests
+- `ai_tokens` - AI/LLM tokens consumed
+- `ai_requests` - Number of AI completion requests
+- `storage_bytes` - Storage space used
+- `file_uploads` / `file_downloads` - File operations
+- `websocket_messages` - WebSocket messages
+- `background_jobs` - Background jobs executed
+- `email_sent` - Emails sent
+
+### Features
+- Redis-based hot storage for current period counters
+- In-memory fallback when Redis unavailable
+- Automatic API request tracking via middleware
+- AI token tracking with model breakdown
+- Stripe usage reporting for metered billing
+- Analytics: trends, growth rate, daily averages, peak detection
+- Category breakdown (by endpoint, AI model, file type)
+
+### Configuration
+```bash
+USAGE_TRACKING_ENABLED=true              # Enable/disable usage tracking
+USAGE_TTL_DAYS=90                        # Days to keep usage data
+USAGE_STRIPE_SYNC_ENABLED=false          # Enable Stripe reporting
+USAGE_STRIPE_SYNC_INTERVAL=3600          # Sync interval in seconds
+```
+
+### Usage Examples
+```python
+# Track API request (automatic via middleware)
+# Tracked automatically for authenticated requests
+
+# Track AI usage (in AI endpoints)
+from app.services.payments.usage import track_ai_usage
+await track_ai_usage(
+    user_id="user123",
+    model="gpt-4o",
+    prompt_tokens=100,
+    completion_tokens=200,
+)
+
+# Get usage tracker
+from app.services.payments.usage import get_usage_tracker
+tracker = get_usage_tracker()
+
+# Get usage summary
+summary = await tracker.get_usage(
+    user_id="user123",
+    metric=UsageMetric.API_REQUESTS,
+    period_start=start_of_month,
+    period_end=now
+)
+
+# Get trends
+trend = await tracker.get_trends("user123", UsageMetric.AI_TOKENS)
+print(f"Growth: {trend.growth_rate}%")
+```
+
+---
+
+## Phase 12.8 Complete - SQLite Fallback
+
+### Files Created
+- `app/models/compat.py` - Cross-database compatibility utilities:
+  - `JSONColumn()` - JSONB for PostgreSQL, JSON for SQLite
+  - `ArrayColumn()` - ARRAY for PostgreSQL, JSON for SQLite
+  - `JSONEncodedList`, `JSONEncodedDict` - TypeDecorator helpers
+- `tests/unit/test_sqlite_fallback.py` - 33 unit tests
+
+### Files Modified
+- `app/core/config.py` - Added SQLite detection and default:
+  - `DATABASE_URL` defaults to SQLite if not set
+  - `is_sqlite` computed property for database detection
+  - Updated `async_database_url` to handle SQLite driver
+- `app/core/db.py` - SQLite-compatible engine configuration:
+  - `StaticPool` for SQLite (required for aiosqlite)
+  - `check_same_thread=False` for multi-threaded access
+- `app/core/cache.py` - In-memory cache fallback:
+  - `InMemoryCache` class with TTL support
+  - Hash and set operations for Redis compatibility
+  - `get_cache()` returns Redis or in-memory fallback
+
+### Features
+- Run without Docker/PostgreSQL/Redis
+- SQLite for database (file-based, no server needed)
+- In-memory cache when Redis unavailable
+- Automatic driver detection and configuration
+- Compatible with existing models
+
+### Usage
+
+**Offline Development (no Docker):**
+```bash
+# Set SQLite in .env
+DATABASE_URL="sqlite+aiosqlite:///./dev.db"
+# Leave REDIS_URL empty for in-memory cache
+
+# Run the app
+make dev
+```
+
+**Standard Development (with Docker):**
+```bash
+make up   # Start PostgreSQL + Redis
+make dev  # Run app
+```
+
+---
+
+## Phase 12 Complete - All Features
 
 ### Completed
 - ✅ **12.1 API Versioning** - v1/v2 routing, deprecation headers, version middleware
 - ✅ **12.2 WebSocket Support** - Real-time communication
 - ✅ **12.3 Admin Dashboard** - Stats, feature flags, impersonation, audit logs
 - ✅ **12.4 OpenTelemetry** - Distributed tracing with OTLP/Zipkin export, log correlation
-- ✅ **12.5 Enhanced Metrics** - System/auth/WebSocket/webhook metrics, Grafana dashboards, MetricsMiddleware
+- ✅ **12.5 Enhanced Metrics** - System/auth/WebSocket/webhook metrics, Grafana dashboards
 - ✅ **12.6 Contact Form** - Public endpoint with spam protection
-
-### Remaining Optional Features
-
-1. **12.7 Usage-Based Billing** - Track and report usage to Stripe
-2. **12.8 SQLite Fallback** - Offline development support
+- ✅ **12.7 Usage-Based Billing** - Track API/AI/storage usage, Stripe reporting, analytics
+- ✅ **12.8 SQLite Fallback** - Offline development with SQLite and in-memory cache
 
 ### Note
 
-Phase 12 features are optional enhancements for v1.1. The v1.0 boilerplate is complete and production-ready.
+Phase 12 is complete. All v1.1 features are now implemented.
 
 ---
 

@@ -87,6 +87,7 @@ These are the foundation - always keep them:
 | **Apple IAP** | `app/services/payments/apple_iap_service.py`, part of `app/business/iap_service.py` | None | No iOS app |
 | **Google IAP** | `app/services/payments/google_iap_service.py`, part of `app/business/iap_service.py` | None | No Android app |
 | **Background Jobs** | `app/jobs/` | arq | No async processing needed |
+| **Usage Tracking** | `app/services/payments/usage.py`, `app/api/v1/app/usage.py`, `app/api/v1/admin/usage.py`, `app/models/usage_record.py` | None | No usage-based billing needed |
 | **Prometheus Metrics** | `app/core/metrics.py`, `app/api/v1/public/metrics.py` | prometheus-client | No metrics needed |
 | **Grafana Dashboards** | `grafana/dashboards/*.json`, `grafana/README.md` | None (Grafana external) | Not using Grafana |
 | **Sentry** | `app/core/sentry.py` | sentry-sdk | No error tracking needed |
@@ -346,6 +347,27 @@ rm -rf app/jobs
 # Remove worker commands from Makefile
 # Remove worker service from docker-compose.yml
 # Remove arq from dependencies
+```
+
+### Remove Usage Tracking
+
+```bash
+# Remove files
+rm app/services/payments/usage.py
+rm app/api/v1/app/usage.py
+rm app/api/v1/admin/usage.py
+rm app/models/usage_record.py
+
+# Update router.py - remove:
+# from app.api.v1.app import usage
+# app_router.include_router(usage.router, prefix="/usage")
+# from app.api.v1.admin import usage as admin_usage
+# admin_router.include_router(admin_usage.router, prefix="/usage")
+
+# Update middleware.py - remove UsageTrackingMiddleware from register_middleware()
+# Update main.py - remove usage middleware if separately registered
+
+# Remove migration for usage_record table (if already run, create drop migration)
 ```
 
 ### Remove Observability

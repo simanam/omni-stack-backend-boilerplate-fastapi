@@ -40,3 +40,25 @@ make lint # Run linter
 make migrate msg="description" # Generate & apply migrations
 
 GO through the CLAUDE.md file to understand the project and continue development.
+
+# 1. Stop local Postgres if running
+
+brew services stop postgresql@17
+
+# 2. Start Docker services
+
+make up
+
+# 3. Activate environment
+
+source .venv/bin/activate
+
+# 4. Verify
+
+make dev # Start server
+curl http://localhost:8000/api/v1/public/health/ready
+
+# 5. Run tests
+
+make test # 189/190 should pass
+make lint

@@ -1,5 +1,7 @@
 """AI/LLM completion endpoints."""
 
+import logging
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
@@ -24,7 +26,30 @@ from app.services.ai import (
     is_ai_available,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["AI"])
+
+
+async def _track_ai_usage(
+    user_id: str,
+    provider: str,
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+) -> None:
+    """Track AI usage for billing."""
+    try:
+        from app.services.payments.usage import track_ai_usage
+
+        await track_ai_usage(
+            user_id=user_id,
+            provider=provider,
+            model=model,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to track AI usage: {e}")
 
 
 def _check_ai_available() -> None:
@@ -102,6 +127,15 @@ async def create_completion(
         max_tokens=request.max_tokens,
     )
 
+    # Track AI usage for billing
+    await _track_ai_usage(
+        user_id=user.id,
+        provider=response.provider,
+        model=response.model,
+        prompt_tokens=response.prompt_tokens,
+        completion_tokens=response.completion_tokens,
+    )
+
     return CompletionResponse(
         content=response.content,
         model=response.model,
@@ -161,6 +195,15 @@ async def simple_chat(
         max_tokens=request.max_tokens,
     )
 
+    # Track AI usage for billing
+    await _track_ai_usage(
+        user_id=user.id,
+        provider=response.provider,
+        model=response.model,
+        prompt_tokens=response.prompt_tokens,
+        completion_tokens=response.completion_tokens,
+    )
+
     return CompletionResponse(
         content=response.content,
         model=response.model,
@@ -202,6 +245,15 @@ async def routed_chat(
         complexity=complexity,
         temperature=request.temperature,
         max_tokens=request.max_tokens,
+    )
+
+    # Track AI usage for billing
+    await _track_ai_usage(
+        user_id=user.id,
+        provider=response.provider,
+        model=response.model,
+        prompt_tokens=response.prompt_tokens,
+        completion_tokens=response.completion_tokens,
     )
 
     return CompletionResponse(

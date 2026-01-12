@@ -40,18 +40,29 @@ class Settings(BaseSettings):
         return json.loads(self.BACKEND_CORS_ORIGINS)
 
     # --- Database ---
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite+aiosqlite:///./dev.db"  # Default to SQLite for offline dev
     DB_POOL_SIZE: int = 10
     DB_POOL_RECYCLE: int = 3600
     DB_USE_NULL_POOL: bool = False  # True for serverless (Neon, Supabase)
 
     @computed_field
     @property
+    def is_sqlite(self) -> bool:
+        """Check if using SQLite database."""
+        return self.DATABASE_URL.startswith("sqlite")
+
+    @computed_field
+    @property
     def async_database_url(self) -> str:
-        """Ensure we're using asyncpg driver."""
-        if self.DATABASE_URL.startswith("postgresql://"):
-            return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
-        return self.DATABASE_URL
+        """Ensure we're using the correct async driver."""
+        url = self.DATABASE_URL
+        # PostgreSQL: use asyncpg
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://")
+        # SQLite: use aiosqlite
+        if url.startswith("sqlite://"):
+            return url.replace("sqlite://", "sqlite+aiosqlite://")
+        return url
 
     # --- Redis ---
     REDIS_URL: str | None = None
@@ -186,6 +197,12 @@ class Settings(BaseSettings):
     CONTACT_SEND_CONFIRMATION: bool = True  # Send confirmation to sender
     CONTACT_WEBHOOK_URL: str | None = None  # Webhook for CRM/integrations
     CONTACT_RATE_LIMIT: str = "5/hour"  # Rate limit per IP
+
+    # --- Usage Tracking (Phase 12.7) ---
+    USAGE_TRACKING_ENABLED: bool = True  # Enable/disable usage tracking
+    USAGE_TTL_DAYS: int = 90  # How long to keep usage data in Redis
+    USAGE_STRIPE_SYNC_ENABLED: bool = False  # Auto-sync usage to Stripe
+    USAGE_STRIPE_SYNC_INTERVAL: str = "1/hour"  # Sync frequency
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -372,6 +372,87 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 # =============================================================================
+# Usage Tracking Middleware (Phase 12.7)
+# =============================================================================
+
+
+class UsageTrackingMiddleware(BaseHTTPMiddleware):
+    """
+    Track API usage per user for billing and analytics.
+
+    Only tracks authenticated requests. Extracts user ID from JWT token.
+    """
+
+    # Paths to skip usage tracking
+    SKIP_PATHS: set[str] = {
+        "/health",
+        "/api/v1/public/health",
+        "/api/v1/public/health/ready",
+        "/api/v2/public/health",
+        "/api/v2/public/health/ready",
+        "/api/v1/public/metrics",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/favicon.ico",
+    }
+
+    # Paths that are public (no auth required, so no usage tracking)
+    PUBLIC_PREFIXES: tuple[str, ...] = (
+        "/api/v1/public/",
+        "/api/v2/public/",
+    )
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Skip tracking for certain paths
+        path = request.url.path
+        if path in self.SKIP_PATHS or path.startswith(self.PUBLIC_PREFIXES):
+            return await call_next(request)
+
+        # Try to extract user ID from authorization header
+        user_id = await self._extract_user_id(request)
+
+        response = await call_next(request)
+
+        # Only track if we have a user ID and request was successful
+        if user_id and response.status_code < 400:
+            await self._track_usage(user_id, request)
+
+        return response
+
+    async def _extract_user_id(self, request: Request) -> str | None:
+        """Extract user ID from JWT token in Authorization header."""
+        auth_header = request.headers.get("authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return None
+
+        try:
+            import jwt
+
+            token = auth_header.replace("Bearer ", "")
+            # Decode without verification to get user_id
+            # (actual verification happens in auth middleware)
+            payload = jwt.decode(token, options={"verify_signature": False})
+            return payload.get("sub") or payload.get("user_id")
+        except Exception:
+            return None
+
+    async def _track_usage(self, user_id: str, request: Request) -> None:
+        """Track API request usage."""
+        try:
+            from app.services.payments.usage import track_api_request
+
+            await track_api_request(
+                user_id=user_id,
+                endpoint=request.url.path,
+                method=request.method,
+            )
+        except Exception as e:
+            # Don't fail the request if usage tracking fails
+            logger.warning(f"Failed to track usage: {e}")
+
+
+# =============================================================================
 # Middleware Registration Helper
 # =============================================================================
 
@@ -389,6 +470,7 @@ def register_middleware(app: ASGIApp) -> None:
     5. (CORS is handled separately by FastAPI)
     """
     # Add in reverse order (last added = first executed)
+    app.add_middleware(UsageTrackingMiddleware)  # Track usage after auth
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestLoggingMiddleware)

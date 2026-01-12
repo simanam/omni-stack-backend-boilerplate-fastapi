@@ -1,32 +1,63 @@
 """
 Database connection and session management.
-Supports both traditional connection pooling and serverless (NullPool).
+
+Supports:
+- PostgreSQL with asyncpg (production)
+- SQLite with aiosqlite (offline development)
+- Traditional connection pooling and serverless (NullPool)
+
+Phase 12.8: SQLite Fallback for offline development
 """
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
+from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool, StaticPool
 from sqlmodel import SQLModel
 
 from app.core.config import settings
 
-
-def get_pool_class() -> type[NullPool] | type[AsyncAdaptedQueuePool]:
-    """Use NullPool for serverless, QueuePool for traditional."""
-    if settings.DB_USE_NULL_POOL:
-        return NullPool
-    return AsyncAdaptedQueuePool
+logger = logging.getLogger(__name__)
 
 
-# Create async engine with appropriate pooling strategy
+def get_engine_options() -> dict[str, Any]:
+    """
+    Get engine options based on database type.
+
+    SQLite requires special handling:
+    - StaticPool for connection sharing (required for aiosqlite)
+    - check_same_thread=False for multi-threaded access
+    """
+    if settings.is_sqlite:
+        logger.info("Using SQLite database (offline development mode)")
+        return {
+            "poolclass": StaticPool,
+            "connect_args": {"check_same_thread": False},
+            "echo": settings.DEBUG,
+        }
+
+    # PostgreSQL options
+    pool_class = NullPool if settings.DB_USE_NULL_POOL else AsyncAdaptedQueuePool
+    options: dict[str, Any] = {
+        "poolclass": pool_class,
+        "echo": settings.DEBUG,
+    }
+
+    # Only add pool settings for non-NullPool
+    if not settings.DB_USE_NULL_POOL:
+        options["pool_size"] = settings.DB_POOL_SIZE
+        options["pool_recycle"] = settings.DB_POOL_RECYCLE
+
+    return options
+
+
+# Create async engine with appropriate settings
 engine = create_async_engine(
     settings.async_database_url,
-    poolclass=get_pool_class(),
-    pool_size=settings.DB_POOL_SIZE if not settings.DB_USE_NULL_POOL else 0,
-    pool_recycle=settings.DB_POOL_RECYCLE if not settings.DB_USE_NULL_POOL else -1,
-    echo=settings.DEBUG,
+    **get_engine_options(),
 )
 
 # Session factory
@@ -40,7 +71,14 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def init_db() -> None:
-    """Create all tables. Use migrations in production."""
+    """
+    Create all tables.
+
+    Use migrations in production with PostgreSQL.
+    For SQLite (offline dev), this creates the schema directly.
+    """
+    if settings.is_sqlite:
+        logger.info("Initializing SQLite database schema")
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
@@ -68,3 +106,8 @@ async def get_session_context() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+def is_sqlite() -> bool:
+    """Check if using SQLite database."""
+    return settings.is_sqlite
